@@ -1,11 +1,21 @@
 # statechart-viz
 
 Draws any [Fulcro statechart](https://github.com/fulcrologic/statecharts) as a Graphviz diagram,
-with the active states highlighted. One library for every chart in agent-pi: an extension
-gets viz by handing its compiled chart to these functions, not by writing its own renderer.
+with the active states highlighted, and zooms into any region of it. Hand it a compiled chart and,
+optionally, a running session's configuration; it knows nothing about any particular chart.
 
-It knows nothing about any particular chart, and depends on nothing in agent-pi. It runs under
-babashka 1.13.223+ and on the JVM.
+Built as the shared viz layer for agent-pi's statechart extensions, so each extension gets viz
+without writing its own renderer. Runs under babashka 1.13.223+ and on the JVM.
+
+## Install
+
+A git dependency in `bb.edn` or `deps.edn`:
+
+```clojure
+{:deps {io.github.sheluchin/statechart-viz {:git/sha "<commit sha>"}}}
+```
+
+Rendering to PNG or SVG needs the Graphviz `dot` binary on PATH. `dot` text output does not.
 
 ```clojure
 (require '[statechart-viz.core :as viz])

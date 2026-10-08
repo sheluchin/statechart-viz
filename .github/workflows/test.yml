@@ -1,0 +1,33 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install babashka
+        run: |
+          curl -sL -o bb.tar.gz \
+            https://github.com/babashka/babashka/releases/download/v1.13.223/babashka-1.13.223-linux-amd64-static.tar.gz
+          tar -xzf bb.tar.gz
+          echo "$PWD" >> "$GITHUB_PATH"
+
+      - name: Install Graphviz
+        run: sudo apt-get update && sudo apt-get install -y graphviz
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: bb-deps-${{ hashFiles('bb.edn', 'deps.edn') }}
+
+      - name: Test
+        run: bb test
