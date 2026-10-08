@@ -1,0 +1,10 @@
+{:min-bb-version "1.13.223"
+ :paths ["src" "test"]
+ :deps {com.fulcrologic/statecharts {:mvn/version "1.4.0-RC19"}}
+ :tasks
+ {test    {:doc "Run the test suite"
+           :task (do (require 'statechart-viz.test-runner)
+                     ((resolve 'statechart-viz.test-runner/-main)))}
+  gallery {:doc "Render every fixture chart to out/<name>.png (needs Graphviz dot)"
+           :task (do (require 'statechart-viz.gallery)
+                     (apply (resolve 'statechart-viz.gallery/-main) *command-line-args*))}}}
