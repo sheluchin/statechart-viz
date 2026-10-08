@@ -106,6 +106,16 @@
     (testing "loops hidden inside the collapsed box are not drawn"
       (is (not (str/includes? dot "tick"))))))
 
+(deftest svg-ids-map-clicks-back-to-states
+  (let [dot (viz/dot f/with-invoke {:depth 2})]
+    (testing "containers, states and invokes carry ids a viewer can read"
+      (is (str/includes? dot "id=\"state:game/playing\"; class=\"sv-container\""))
+      (is (str/includes? (line-for dot "Game Over") "id=\"state:game/over\" class=\"sv-state\""))
+      (is (str/includes? dot "id=\"invoke:statechart-viz.fixtures/child\" class=\"sv-invoke\""))))
+  (testing "collapsed boxes and stubs are marked too"
+    (is (str/includes? (viz/dot f/nested {:depth 1}) "id=\"state:app\" class=\"sv-collapsed\""))
+    (is (str/includes? (viz/dot f/nested {:focus :app/running}) "id=\"stub:app/paused\" class=\"sv-stub\""))))
+
 (deftest outline-and-zoom-targets
   (let [o (viz/outline f/nested #{:work/b})]
     (is (= :root (:kind o)))

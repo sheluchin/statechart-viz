@@ -32,6 +32,12 @@
 
 (defn- q [s] (str "\"" (esc s) "\""))
 
+(defn- svg-id
+  "SVG element id for a state, so a viewer can map a click back to it:
+  `:intake/handling` -> `state:intake/handling`."
+  [id]
+  (str "state:" (if (keyword? id) (subs (str id) 1) (str id))))
+
 (defn- attrs [m]
   (str "["
        (->> m
@@ -56,7 +62,8 @@
   [ctx node]
   (let [{:keys [depth focus-depth idx]} ctx]
     (and depth
-         (m/compound? node)
+         ;; only child states collapse; a state holding just an invoke stays open
+         (seq (:children node))
          (>= (- (:depth (get idx (:id node))) focus-depth) depth)
          (not= (:id node) (:focus ctx)))))
 
@@ -112,14 +119,16 @@
     (case (:kind node)
       :history
       (str "  " (q id) " "
-           (attrs {:label     (if (= :deep (:history-type node)) "H*" "H")
+           (attrs {:id        (svg-id (:id node)) :class "sv-state"
+                   :label     (if (= :deep (:history-type node)) "H*" "H")
                    :shape     "circle" :width 0.3 :fixedsize "true"
                    :fontsize  10 :style "filled"
                    :fillcolor (fill-for ctx node active?)
                    :color     (if active? (:active-border t) (:state-border t))})
            ";\n")
       (str "  " (q id) " "
-           (attrs {:label      (:label node)
+           (attrs {:id         (svg-id (:id node)) :class "sv-state"
+                   :label      (:label node)
                    :shape      "box"
                    :style      "rounded,filled"
                    :peripheries (when (= :final (:kind node)) 2)
@@ -133,7 +142,8 @@
         active? (subtree-active? ctx node)
         n       (count-states node)]
     (str "  " (q (get (:ids ctx) (:id node))) " "
-         (attrs {:label     (str (:label node) "\n⊞ " n (if (= 1 n) " state" " states"))
+         (attrs {:id        (svg-id (:id node)) :class "sv-collapsed"
+                 :label     (str (:label node) "\n⊞ " n (if (= 1 n) " state" " states"))
                  :shape     "box"
                  :style     "rounded,filled,bold"
                  :fillcolor (fill-for ctx node active?)
@@ -144,7 +154,8 @@
 (defn- invoke-line [ctx inv]
   (let [t (:theme ctx)]
     (str "  " (q (str "inv_" (get (:ids ctx) (:parent-id inv)) "_" (:n inv))) " "
-         (attrs {:label     (str "⤵ " (:label inv))
+         (attrs {:id        (str "invoke:" (:src inv)) :class "sv-invoke"
+                 :label     (str "⤵ " (:label inv))
                  :shape     "box3d"
                  :style     "dashed,filled"
                  :fillcolor (:invoke-fill t)
@@ -172,6 +183,7 @@
         active?  (contains? (:active ctx) (:id node))
         par?     (= :parallel (:kind node))]
     (str "subgraph " (q (str "cluster_" id)) " {\n"
+         "  id=" (q (svg-id (:id node))) "; class=\"sv-container\";\n"
          "  label=" (q (str/join "\n" (cons (if par? (str (:label node) "   ∥") (:label node))
                                             (loop-labels ctx node)))) ";\n"
          "  labeljust=\"l\"; labelloc=\"t\"; fontsize=" (:font-size t) ";\n"
@@ -285,7 +297,8 @@
      :lines (apply str
                    (for [g ghosts]
                      (str "  " (q (get ids g)) " "
-                          (attrs {:label     (str "↗ " (:label (get (:idx ctx) g)))
+                          (attrs {:id        (str "stub:" (subs (svg-id g) 6)) :class "sv-stub"
+                                  :label     (str "↗ " (:label (get (:idx ctx) g)))
                                   :shape     "plaintext"
                                   :fontcolor (:muted t)
                                   :fontsize  10})
