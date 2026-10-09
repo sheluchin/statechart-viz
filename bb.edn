@@ -2,11 +2,9 @@
  :paths ["src" "test"]
  :deps {com.fulcrologic/statecharts {:mvn/version "1.4.0-RC19"}}
  :tasks
- {site    {:doc "Collect the browser page's sources into site/vendor"
+ {site    {:doc "Bundle the browser page's sources into site/vendor/bundle.js; then open site/index.html"
            :extra-paths ["site"]
            :task (do (require 'build) ((resolve 'build/-main)))}
-  serve   {:doc "Serve site/ on http://localhost:8090 (run `bb site` first)"
-           :task (shell {:dir "site"} "python3 -m http.server 8090")}
   test    {:doc "Run the test suite"
            :task (do (require 'statechart-viz.test-runner)
                      ((resolve 'statechart-viz.test-runner/-main)))}

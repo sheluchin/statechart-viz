@@ -59,7 +59,9 @@
           (.addEventListener b "click" #(send! e))
           (.append box b))))
     (set! (.-textContent (el "active"))
-          (str/join "  " (sort (map str active))))))
+          (if (seq active)
+            (str/join "  " (sort (map str active)))
+            "Finished: the chart reached a top-level final state. Reset to start again."))))
 
 (defn send! [event]
   (let [{:keys [env wmem]} @state
@@ -85,9 +87,8 @@
       (show-error! (ex-message e)))))
 
 (defn load-example! [file]
-  (-> (js/fetch (str "examples/" file ".cljs"))
-      (.then #(.text %))
-      (.then (fn [code] (set! (.-value (el "code")) code) (start!)))))
+  (set! (.-value (el "code")) (aget js/STATECHART_VIZ "examples" file))
+  (start!))
 
 (defn init []
   (let [picker (el "example")]

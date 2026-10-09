@@ -68,25 +68,20 @@
 
   <script src="https://cdn.jsdelivr.net/npm/scittle@0.8.33/dist/scittle.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@viz-js/viz@3.30.0/dist/viz-global.js"></script>
+  <script src="vendor/bundle.js"></script>
   <script>
     // Evaluate the library sources in dependency order (see site/build.clj), then the app.
-    (async () => {
+    (() => {
       const status = document.getElementById("status");
-      const text = async (path) => {
-        const res = await fetch(path);
-        if (!res.ok) throw new Error(`${path}: ${res.status}`);
-        return res.text();
-      };
+      const t0 = performance.now();
+      const { libs, app } = window.STATECHART_VIZ;
       try {
-        const t0 = performance.now();
-        const order = JSON.parse(await text("vendor/load-order.json"));
-        const sources = await Promise.all(order.map((p) => text("vendor/" + p)));
-        order.forEach((path, i) => {
-          try { scittle.core.eval_string(sources[i]); }
+        for (const [path, src] of libs) {
+          try { scittle.core.eval_string(src); }
           catch (e) { throw new Error(`${path}: ${e.message}`); }
-        });
-        scittle.core.eval_string(await text("app.cljs"));
-        status.textContent = `${order.length} files loaded in ${Math.round(performance.now() - t0)} ms. ` +
+        }
+        scittle.core.eval_string(app);
+        status.textContent = `${libs.length} files loaded in ${Math.round(performance.now() - t0)} ms. ` +
           "Edit the code, then Run (Ctrl/Cmd-Enter).";
       } catch (e) {
         status.textContent = "Failed to load: " + e.message;

@@ -1,10 +1,13 @@
 (ns build
   "Collects the cljs sources the browser page loads into Scittle: this
   library, the statecharts namespaces it needs and the shims in site/shims,
-  in dependency order. Writes site/vendor/ and site/vendor/load-order.json."
+  in dependency order, plus the app and the examples. Writes them all as
+  strings into site/vendor/bundle.js, which a <script> tag loads, so the
+  page works from file:// with no server."
   (:require
    [clojure.java.io :as io]
    [clojure.string :as str]
+   [cheshire.core :as json]
    [edamame.core :as e]))
 
 (def roots
@@ -68,13 +71,14 @@
     @order))
 
 (defn -main [& _]
-  (let [out   (io/file "site/vendor")
-        order (load-order roots)]
-    (io/copy (io/file "site/shims/prelude.cljs") (doto (io/file out "prelude.cljs") io/make-parents))
-    (doseq [[_ path url] order]
-      (let [f (io/file out path)]
-        (io/make-parents f)
-        (spit f (patch path (slurp url)))))
-    (spit (io/file out "load-order.json")
-          (str "[" (str/join "," (map #(str "\"" % "\"") (cons "prelude.cljs" (map second order)))) "]"))
-    (println "Wrote" (count order) "namespaces to site/vendor")))
+  (let [libs     (for [[_ path url] (load-order roots)] [path (patch path (slurp url))])
+        examples (into (sorted-map)
+                       (for [f (.listFiles (io/file "site/examples"))]
+                         [(str/replace (.getName f) #"\.cljs$" "") (slurp f)]))
+        bundle   {:libs     (cons ["prelude.cljs" (slurp "site/shims/prelude.cljs")] libs)
+                  :app      (slurp "site/app.cljs")
+                  :examples examples}
+        out      (io/file "site/vendor/bundle.js")]
+    (io/make-parents out)
+    (spit out (str "window.STATECHART_VIZ = " (json/generate-string bundle) ";\n"))
+    (println "Wrote" (count libs) "namespaces and" (count examples) "examples to" (str out))))
