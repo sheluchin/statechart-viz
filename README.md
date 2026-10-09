@@ -1,8 +1,9 @@
 # statechart-viz
 
 Draws any [Fulcro statechart](https://github.com/fulcrologic/statecharts) as a Graphviz diagram,
-with the active states highlighted, and zooms into any region of it. Hand it a compiled chart and,
-optionally, a running session's configuration; it knows nothing about any particular chart.
+with the active states highlighted, and zooms into any region of it. Hand it a running session's
+id and its env, or a compiled chart and optionally a configuration; it knows nothing about any
+particular chart.
 
 Built as the shared viz layer for agent-pi's statechart extensions, so each extension gets viz
 without writing its own renderer. Runs under babashka 1.13.223+ and on the JVM.
@@ -16,12 +17,15 @@ for real and drawn after two events. Each region's active state is gold.*
 
 ### A running session
 
-Pass a session's configuration as `:active`: active states fill gold and the containers holding
-them get a gold border. This chart has three levels of nesting, a history node (`H`, dotted arrow
+Pass the statecharts env and a session id: the chart comes from the env's registry and the active
+states from its working-memory store. Active states fill gold and the containers holding them get
+a gold border. This chart has three levels of nesting, a history node (`H`, dotted arrow
 to its default), an internal transition (`↺ volume` on the `playing` box), a self-loop and two
 finals (double border).
 
 ```clojure
+(viz/render-session env session-id {:format :svg})
+;; the same as passing the chart and the session's configuration yourself:
 (viz/render player {:active #{:player :player/on :on/playing :playing/track} :format :svg})
 ```
 
@@ -42,6 +46,7 @@ nav menu.
 
 A state that invokes another chart shows it as a blue box named after the child chart. The child
 is its own session, so you draw it with its own call, and a `:title` says where it lives.
+`session-tree` finds the children of a running session, for a menu of them.
 
 | The parent: `Playing` invokes `coin` | The child session, drawn on its own |
 |---|---|
@@ -81,9 +86,10 @@ either way.
 (require '[statechart-viz.core :as viz])
 
 (viz/dot chart)                                   ; the whole chart, before it runs
-(viz/dot chart {:active (rt/current-configuration env session-id)})   ; a running session
-(viz/dot chart {:focus :intake/handling :depth 1})                     ; zoomed in
-(viz/render chart {:active cfg :format :png})     ; => {:ok bytes} or {:error msg}
+(viz/session-dot env session-id)                  ; a running session, by its id
+(viz/session-dot env session-id {:focus :intake/handling :depth 1})    ; zoomed in
+(viz/render-session env session-id {:format :png})                     ; => {:ok bytes} or {:error msg}
+(viz/dot chart {:active cfg})                     ; a configuration you got some other way
 ```
 
 ## API
@@ -94,6 +100,9 @@ either way.
 | `(render chart opts)` | `{:ok bytes}` or `{:error message}`, using the `dot` binary; adds `:format` (`:png`, `:svg`) and `:dpi` |
 | `(outline chart active)` | The state tree as data: `{:id :label :kind :active? :invokes :children}` |
 | `(zoom-targets chart)` | Every container you can zoom into, outermost first, with its `:path` of labels. For a nav menu |
+| `(session-dot env session-id opts)` | DOT for a running session: its chart from the env's registry, its active states from the working-memory store. Nil if the store has no such session |
+| `(render-session env session-id opts)` | `render` for a running session; `{:error "No session …"}` if there is none |
+| `(session-tree env session-id)` | The session and the charts it invoked, recursively: `{:session-id :src :active :parent :children}` |
 
 Options for `dot` and `render`:
 
@@ -154,11 +163,15 @@ The first keys are the statecharts library's own diagram conventions (`chart/dia
 
 ## Zooming into invoked charts
 
-An invoked chart is a separate session with its own chart and configuration. Draw it with its own
-`dot` call, and pass a `:title` that says where it came from:
+An invoked chart is a separate session with its own chart and configuration. Its session id is the
+invoke's `:id`, so give each invoke one. `session-tree` lists a session's running children; draw
+each with its own call, and pass a `:title` that says where it came from:
 
 ```clojure
-(viz/dot coin/chart {:active child-cfg :title "game › Playing › ⤵ coin"})
+(viz/session-tree env :game)
+;; => {:session-id :game :src `game/chart :active #{...}
+;;     :children [{:session-id :game.coin :src `coin/chart :parent :game :active #{...} :children []}]}
+(viz/session-dot env :game.coin {:title "game › Playing › ⤵ coin"})
 ```
 
 ## Develop
