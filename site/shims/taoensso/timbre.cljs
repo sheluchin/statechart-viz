@@ -1,0 +1,15 @@
+(ns taoensso.timbre
+  "Browser shim: warnings and errors go to the console, the rest is dropped.")
+
+(defmacro trace [& _] nil)
+(defmacro debug [& _] nil)
+(defmacro info [& _] nil)
+(defmacro tracef [& _] nil)
+(defmacro debugf [& _] nil)
+(defmacro infof [& _] nil)
+(defmacro warn [& args] `(js/console.warn ~@args))
+(defmacro error [& args] `(js/console.error ~@args))
+(defmacro warnf [& args] `(js/console.warn ~@args))
+(defmacro errorf [& args] `(js/console.error ~@args))
+(defmacro spy [& args] (last args))
+(defn set-min-level! [& _] nil)

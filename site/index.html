@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Statechart Viz Playground</title>
+  <style>
+    :root {
+      --bg: #f7f8fa; --panel: #ffffff; --text: #1c2230; --muted: #6b7484;
+      --border: #d5dae1; --accent: #5a7a99; --error: #b3261e; --error-bg: #fdecea;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #14171c; --panel: #1c2028; --text: #e3e6eb; --muted: #9aa3b1;
+        --border: #2f3541; --accent: #8fb0d0; --error: #f2b8b5; --error-bg: #3a1d1c;
+      }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text);
+           font: 14px/1.4 system-ui, sans-serif; }
+    header { padding: 12px 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+             border-bottom: 1px solid var(--border); }
+    header h1 { font-size: 16px; margin: 0 8px 0 0; }
+    header .hint { color: var(--muted); font-size: 12px; }
+    main { display: grid; grid-template-columns: minmax(320px, 1fr) 1.4fr; gap: 16px; padding: 16px; }
+    @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+    textarea { width: 100%; height: calc(100vh - 140px); min-height: 300px; resize: vertical;
+               font: 12.5px/1.5 ui-monospace, Menlo, monospace; padding: 12px;
+               background: var(--panel); color: var(--text);
+               border: 1px solid var(--border); border-radius: 6px; tab-size: 2;
+               white-space: pre; overflow-wrap: normal; overflow-x: auto; }
+    button, select { font: inherit; padding: 5px 10px; border-radius: 5px; cursor: pointer;
+                     border: 1px solid var(--border); background: var(--panel); color: var(--text); }
+    button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    button:disabled { opacity: .4; cursor: default; }
+    #events { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+    #events button { font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+    #diagram { background: #f7f8fa; border: 1px solid var(--border); border-radius: 6px;
+               padding: 8px; overflow: auto; min-height: 200px; }
+    #diagram svg { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+    #active { color: var(--muted); font: 12px ui-monospace, Menlo, monospace; margin-top: 8px;
+              word-break: break-word; }
+    #error { color: var(--error); background: var(--error-bg); padding: 8px 10px;
+             border-radius: 5px; margin-bottom: 10px; white-space: pre-wrap;
+             font: 12px ui-monospace, Menlo, monospace; }
+    .label { color: var(--muted); font-size: 12px; margin: 0 0 6px; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>statechart-viz playground</h1>
+    <select id="example" aria-label="Example"></select>
+    <button id="run" class="primary">Run</button>
+    <button id="reset">Reset</button>
+    <span class="hint" id="status">Loading SCI and the statecharts library…</span>
+  </header>
+  <main>
+    <textarea id="code" spellcheck="false" aria-label="Chart code"></textarea>
+    <section>
+      <div id="error" class="hidden"></div>
+      <p class="label">Events (enabled when an active state handles them)</p>
+      <div id="events"></div>
+      <div id="diagram"></div>
+      <div id="active"></div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/scittle@0.8.33/dist/scittle.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@viz-js/viz@3.30.0/dist/viz-global.js"></script>
+  <script>
+    // Evaluate the library sources in dependency order (see site/build.clj), then the app.
+    (async () => {
+      const status = document.getElementById("status");
+      const text = async (path) => {
+        const res = await fetch(path);
+        if (!res.ok) throw new Error(`${path}: ${res.status}`);
+        return res.text();
+      };
+      try {
+        const t0 = performance.now();
+        const order = JSON.parse(await text("vendor/load-order.json"));
+        const sources = await Promise.all(order.map((p) => text("vendor/" + p)));
+        order.forEach((path, i) => {
+          try { scittle.core.eval_string(sources[i]); }
+          catch (e) { throw new Error(`${path}: ${e.message}`); }
+        });
+        scittle.core.eval_string(await text("app.cljs"));
+        status.textContent = `${order.length} files loaded in ${Math.round(performance.now() - t0)} ms. ` +
+          "Edit the code, then Run (Ctrl/Cmd-Enter).";
+      } catch (e) {
+        status.textContent = "Failed to load: " + e.message;
+        console.error(e);
+      }
+    })();
+  </script>
+</body>
+</html>
