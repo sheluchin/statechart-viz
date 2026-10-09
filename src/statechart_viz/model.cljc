@@ -32,7 +32,7 @@
   [elems order parent-id]
   (->> (vals elems)
        (filter #(= parent-id (:parent %)))
-       (sort-by #(get order (:id %) Long/MAX_VALUE))))
+       (sort-by #(get order (:id %) ##Inf))))
 
 (defn- initial-pseudo? [el] (boolean (:initial? el)))
 
@@ -57,7 +57,8 @@
   [el]
   (let [id (:id el) t (:node-type el)]
     (boolean (and (keyword? id) (nil? (namespace id)) (keyword? t)
-                  (re-matches (re-pattern (str "\\Q" (name t) "\\E\\d+")) (name id))))))
+                  (let [s (name id) t (name t)]
+                    (and (str/starts-with? s t) (re-matches #"\d+" (subs s (count t)))))))))
 
 (defn label
   "Display text for an element. An unnamed element reads as its type."
@@ -158,7 +159,7 @@
                      (filter #(= :transition (:node-type %)))
                      (remove #(let [p (get elems (:parent %))]
                                 (or (initial-pseudo? p) (= :history (:node-type p)))))
-                     (sort-by #(get order (:id %) Long/MAX_VALUE)))
+                     (sort-by #(get order (:id %) ##Inf)))
         by-source (group-by :parent ordered)]
     (->> ordered
          (mapv (fn [t]

@@ -16,7 +16,7 @@
   (:require
    [statechart-viz.dot :as d]
    [statechart-viz.model :as m]
-   [statechart-viz.render :as r]
+   #?(:clj [statechart-viz.render :as r])
    [statechart-viz.session :as s]))
 
 (defn dot
@@ -61,13 +61,14 @@
                                (mapv #(:label (get idx %))))
                   :states (count (:children n))})))))
 
-(defn render
-  "Render with the Graphviz `dot` binary. Options are those of `dot` plus
-  :format (:svg or :png, default :png) and :dpi (png only, default 144).
-  Returns {:ok bytes} or {:error message}."
-  ([chart] (render chart {}))
-  ([chart opts]
-   (r/render-dot (d/dot chart opts) opts)))
+#?(:clj
+   (defn render
+     "Render with the Graphviz `dot` binary. Options are those of `dot` plus
+     :format (:svg or :png, default :png) and :dpi (png only, default 144).
+     Returns {:ok bytes} or {:error message}."
+     ([chart] (render chart {}))
+     ([chart opts]
+      (r/render-dot (d/dot chart opts) opts))))
 
 (defn session-tree
   "The session `session-id` in `env` and the charts it invoked, recursively:
@@ -90,11 +91,12 @@
    (when-let [[chart opts] (session-opts env session-id opts)]
      (d/dot chart opts))))
 
-(defn render-session
-  "`render` for the running session `session-id` in `env`.
-  Returns {:ok bytes} or {:error message}."
-  ([env session-id] (render-session env session-id {}))
-  ([env session-id opts]
-   (if-let [[chart opts] (session-opts env session-id opts)]
-     (r/render-dot (d/dot chart opts) opts)
-     {:error (str "No session " session-id)})))
+#?(:clj
+   (defn render-session
+     "`render` for the running session `session-id` in `env`.
+     Returns {:ok bytes} or {:error message}."
+     ([env session-id] (render-session env session-id {}))
+     ([env session-id opts]
+      (if-let [[chart opts] (session-opts env session-id opts)]
+        (r/render-dot (d/dot chart opts) opts)
+        {:error (str "No session " session-id)}))))
