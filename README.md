@@ -6,7 +6,12 @@ id and its env, or a compiled chart and optionally a configuration; it knows not
 particular chart.
 
 Built as the shared viz layer for agent-pi's statechart extensions, so each extension gets viz
-without writing its own renderer. Runs under babashka 1.13.223+ and on the JVM.
+without writing its own renderer. Runs under babashka 1.13.223+, on the JVM, and in the browser under
+[SCI](https://github.com/babashka/sci).
+
+**[Try it in your browser](https://sheluchin.github.io/statechart-viz/):** paste a chart, click its
+events and watch the active states move. It runs in [Scittle](https://github.com/babashka/scittle),
+with no build step; the source is in [`site/`](site/).
 
 ![The traffic light chart from the statecharts docs, running: four parallel regions, the active state of each in gold](doc/traffic-lights.svg)
 
