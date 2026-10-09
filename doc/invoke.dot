@@ -1,0 +1,34 @@
+digraph statechart {
+  compound=true; newrank=true; rankdir=TB;
+  bgcolor="#f7f8fa"; pad=0.3; nodesep=0.4; ranksep=0.45;
+  fontname="Helvetica"; fontcolor="#1c2230";
+  node [fontname="Helvetica" fontsize=12 fontcolor="#1c2230" margin="0.15,0.06"];
+  edge [fontname="Courier" fontsize=10 arrowsize=0.8];
+  "init_s0" [shape="point" width=0.12 color="#2b313b" fillcolor="#2b313b"];
+subgraph "cluster_s1" {
+  id="state:game"; class="sv-container";
+  label="game";
+  labeljust="l"; labelloc="t"; fontsize=12;
+  style="rounded";
+  color="#b8860b";
+  penwidth=2.5;
+  "s1" [shape=point style=invis width=0.01 height=0.01 label=""];
+  "init_s1" [shape="point" width=0.12 color="#2b313b" fillcolor="#2b313b"];
+  "s2" [color="#5a7a99" fillcolor="#ffffff" penwidth=1.2 style="rounded,filled" label="ready" id="state:game/ready" class="sv-state" shape="box"];
+subgraph "cluster_s3" {
+  id="state:game/playing"; class="sv-container";
+  label="Playing";
+  labeljust="l"; labelloc="t"; fontsize=12;
+  style="rounded";
+  color="#b8860b";
+  penwidth=2.5;
+  "s3" [shape=point style=invis width=0.01 height=0.01 label=""];
+  "inv_s3_0" [id="invoke:statechart-viz.readme/coin" class="sv-invoke" label="⤵ coin" shape="box3d" style="dashed,filled" fillcolor="#e7f3ff" color="#3b7bbf" fontsize=11];
+}
+  "s4" [color="#5a7a99" fillcolor="#ffffff" penwidth=1.2 style="rounded,filled" peripheries=2 label="Game Over" id="state:game/over" class="sv-state" shape="box"];
+}
+  "init_s0" -> "s1" [lhead="cluster_s1" color="#2b313b" arrowsize=0.7];
+  "init_s1" -> "s2" [color="#2b313b" arrowsize=0.7];
+  "s2" -> "s3" [label=" play " lhead="cluster_s3" color="#5a6472" fontcolor="#1c2230"];
+  "s3" -> "s4" [label=" finish " ltail="cluster_s3" color="#5a6472" fontcolor="#1c2230"];
+}

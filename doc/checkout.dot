@@ -1,0 +1,20 @@
+digraph statechart {
+  compound=true; newrank=true; rankdir=TB;
+  bgcolor="#f7f8fa"; pad=0.3; nodesep=0.4; ranksep=0.45;
+  fontname="Helvetica"; fontcolor="#1c2230";
+  node [fontname="Helvetica" fontsize=12 fontcolor="#1c2230" margin="0.15,0.06"];
+  edge [fontname="Courier" fontsize=10 arrowsize=0.8];
+  "init_s0" [shape="point" width=0.12 color="#2b313b" fillcolor="#2b313b"];
+  "s1" [color="#5a7a99" fillcolor="#ffffff" penwidth=1.2 style="rounded,filled" label="cart" id="state:checkout/cart" class="sv-state" shape="box"];
+  "s2" [color="#b8860b" fillcolor="#ffe08a" penwidth=2.5 style="rounded,filled" label="charging" id="state:checkout/charging" class="sv-state" shape="box"];
+  "s3" [color="#5a7a99" fillcolor="#e9e4f5" penwidth=1.2 style="rounded,filled" label="review" id="state:checkout/review" class="sv-state" shape="box"];
+  "s4" [color="#5a7a99" fillcolor="#dcefdf" penwidth=1.2 style="rounded,filled" peripheries=2 label="paid" id="state:checkout/paid" class="sv-state" shape="box"];
+  "s5" [color="#5a7a99" fillcolor="#f8e2e2" penwidth=1.2 style="rounded,filled" peripheries=2 label="failed" id="state:checkout/failed" class="sv-state" shape="box"];
+  "init_s0" -> "s1" [color="#2b313b" arrowsize=0.7];
+  "s1" -> "s2" [label=" pay " color="#5a6472" fontcolor="#1c2230"];
+  "s2" -> "s4" [label=" charged [amount matches] / send receipt " color="#7a6bbf" fontcolor="#7a6bbf"];
+  "s2" -> "s3" [label=" charged " color="#5a6472" fontcolor="#1c2230"];
+  "s2" -> "s5" [label=" declined " color="#5a6472" fontcolor="#1c2230"];
+  "s3" -> "s4" [label=" approve " color="#5a6472" fontcolor="#1c2230"];
+  "s3" -> "s5" [label=" reject " color="#5a6472" fontcolor="#1c2230"];
+}

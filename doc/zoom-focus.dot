@@ -1,0 +1,42 @@
+digraph statechart {
+  compound=true; newrank=true; rankdir=TB;
+  bgcolor="#f7f8fa"; pad=0.3; nodesep=0.4; ranksep=0.45;
+  fontname="Helvetica"; fontcolor="#1c2230";
+  label="player › on"; labelloc="t"; labeljust="l"; fontsize=14;
+  node [fontname="Helvetica" fontsize=12 fontcolor="#1c2230" margin="0.15,0.06"];
+  edge [fontname="Courier" fontsize=10 arrowsize=0.8];
+subgraph "cluster_s2" {
+  id="state:player/on"; class="sv-container";
+  label="on";
+  labeljust="l"; labelloc="t"; fontsize=12;
+  style="rounded";
+  color="#b8860b";
+  penwidth=2.5;
+  "s2" [shape=point style=invis width=0.01 height=0.01 label=""];
+  "init_s2" [shape="point" width=0.12 color="#2b313b" fillcolor="#2b313b"];
+  "s3" [fixedsize="true" color="#5a7a99" fillcolor="#ffffff" width=0.3 style="filled" label="H" id="state:on/resume" class="sv-state" shape="circle" fontsize=10];
+  "s4" [color="#5a7a99" fillcolor="#ffffff" penwidth=1.2 style="rounded,filled" label="stopped" id="state:on/stopped" class="sv-state" shape="box"];
+subgraph "cluster_s5" {
+  id="state:on/playing"; class="sv-container";
+  label="playing\n↺ volume";
+  labeljust="l"; labelloc="t"; fontsize=12;
+  style="rounded";
+  color="#b8860b";
+  penwidth=2.5;
+  "s5" [shape=point style=invis width=0.01 height=0.01 label=""];
+  "init_s5" [shape="point" width=0.12 color="#2b313b" fillcolor="#2b313b"];
+  "s6" [color="#b8860b" fillcolor="#ffe08a" penwidth=2.5 style="rounded,filled" label="track" id="state:playing/track" class="sv-state" shape="box"];
+  "s7" [color="#5a7a99" fillcolor="#ffffff" penwidth=1.2 style="rounded,filled" peripheries=2 label="done" id="state:playing/done" class="sv-state" shape="box"];
+}
+}
+  "ghost0" [id="stub:player/off" class="sv-stub" label="↗ off" shape="plaintext" fontcolor="#6b7484" fontsize=10];
+  "init_s2" -> "s4" [color="#2b313b" arrowsize=0.7];
+  "init_s5" -> "s6" [color="#2b313b" arrowsize=0.7];
+  "s3" -> "s4" [style="dotted" color="#6b7484" arrowsize=0.7];
+  "s2" -> "ghost0" [label=" power " ltail="cluster_s2" color="#5a6472" fontcolor="#1c2230"];
+  "s4" -> "s6" [label=" play " color="#5a6472" fontcolor="#1c2230"];
+  "s5" -> "s4" [label=" stop " ltail="cluster_s5" color="#5a6472" fontcolor="#1c2230"];
+  "s6" -> "s6" [label=" next " color="#5a6472" fontcolor="#1c2230"];
+  "s6" -> "s7" [label=" ended " color="#5a6472" fontcolor="#1c2230"];
+  "ghost0" -> "s3" [label=" power " color="#5a6472" fontcolor="#1c2230"];
+}

@@ -1,0 +1,17 @@
+digraph statechart {
+  compound=true; newrank=true; rankdir=TB;
+  bgcolor="#f7f8fa"; pad=0.3; nodesep=0.4; ranksep=0.45;
+  fontname="Helvetica"; fontcolor="#1c2230";
+  label="game › Playing › ⤵ coin"; labelloc="t"; labeljust="l"; fontsize=14;
+  node [fontname="Helvetica" fontsize=12 fontcolor="#1c2230" margin="0.15,0.06"];
+  edge [fontname="Courier" fontsize=10 arrowsize=0.8];
+  "init_s0" [shape="point" width=0.12 color="#2b313b" fillcolor="#2b313b"];
+  "s1" [color="#5a7a99" fillcolor="#ffffff" penwidth=1.2 style="rounded,filled" label="flipping" id="state:coin/flipping" class="sv-state" shape="box"];
+  "s2" [color="#5a7a99" fillcolor="#ffffff" penwidth=1.2 style="rounded,filled" label="heads" id="state:coin/heads" class="sv-state" shape="box"];
+  "s3" [color="#b8860b" fillcolor="#ffe08a" penwidth=2.5 style="rounded,filled" label="tails" id="state:coin/tails" class="sv-state" shape="box"];
+  "init_s0" -> "s1" [color="#2b313b" arrowsize=0.7];
+  "s1" -> "s2" [label=" [rand < ½] " color="#7a6bbf" fontcolor="#7a6bbf"];
+  "s1" -> "s3" [color="#5a6472" fontcolor="#1c2230"];
+  "s2" -> "s1" [label=" flip " color="#5a6472" fontcolor="#1c2230"];
+  "s3" -> "s1" [label=" flip " color="#5a6472" fontcolor="#1c2230"];
+}

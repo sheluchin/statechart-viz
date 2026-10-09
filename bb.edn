@@ -7,4 +7,7 @@
                      ((resolve 'statechart-viz.test-runner/-main)))}
   gallery {:doc "Render every fixture chart to out/<name>.png (needs Graphviz dot)"
            :task (do (require 'statechart-viz.gallery)
-                     (apply (resolve 'statechart-viz.gallery/-main) *command-line-args*))}}}
+                     (apply (resolve 'statechart-viz.gallery/-main) *command-line-args*))}
+  readme-images {:doc "Render the README's pictures to doc/ (needs Graphviz dot for the SVGs)"
+                 :task (do (require 'statechart-viz.readme)
+                           (apply (resolve 'statechart-viz.readme/-main) *command-line-args*))}}}

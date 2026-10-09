@@ -7,6 +7,61 @@ optionally, a running session's configuration; it knows nothing about any partic
 Built as the shared viz layer for agent-pi's statechart extensions, so each extension gets viz
 without writing its own renderer. Runs under babashka 1.13.223+ and on the JVM.
 
+![The traffic light chart from the statecharts docs, running: four parallel regions, the active state of each in gold](doc/traffic-lights.svg)
+
+*The traffic light from the [statecharts docs](https://fulcrologic.github.io/statecharts/), run
+for real and drawn after two events. Each region's active state is gold.*
+
+## What it looks like
+
+### A running session
+
+Pass a session's configuration as `:active`: active states fill gold and the containers holding
+them get a gold border. This chart has three levels of nesting, a history node (`H`, dotted arrow
+to its default), an internal transition (`↺ volume` on the `playing` box), a self-loop and two
+finals (double border).
+
+```clojure
+(viz/render player {:active #{:player :player/on :on/playing :playing/track} :format :svg})
+```
+
+![A media player chart with nested states, history and finals; the playing track is active](doc/player.svg)
+
+### Zoom in, fold away
+
+`:focus` draws one state's subtree. A transition that leaves it ends at a grey `↗ off` stub, and
+the title becomes a breadcrumb. `:depth` folds everything deeper than that many levels into one
+`⊞ 4 states` box, for an overview. `zoom-targets` lists every container you can focus on, for a
+nav menu.
+
+| `{:focus :player/on}` | `{:depth 2}` |
+|---|---|
+| ![Zoomed into the on state, with a stub where the power transition leaves it](doc/zoom-focus.svg) | ![The whole player folded to two levels: on is one box of 4 states](doc/zoom-depth.svg) |
+
+### Invoked charts
+
+A state that invokes another chart shows it as a blue box named after the child chart. The child
+is its own session, so you draw it with its own call, and a `:title` says where it lives.
+
+| The parent: `Playing` invokes `coin` | The child session, drawn on its own |
+|---|---|
+| ![A game whose Playing state invokes a coin chart](doc/invoke.svg) | ![The coin chart, landed on tails, titled game › Playing › coin](doc/invoke-child.svg) |
+
+### Annotations
+
+Guards are functions, so on their own an edge only says `[guard]`. `:diagram/condition` says what
+the guard checks, `:diagram/label` on executable content lists the actions, and `:diagram/kind`
+colours a state by its role. See [Annotating a chart](#annotating-a-chart).
+
+```clojure
+(transition {:event :charged :cond amount-ok? :target :checkout/paid
+             :diagram/condition "amount matches"}
+  (script {:expr send-receipt! :diagram/label "send receipt"}))
+(final {:id :checkout/paid :diagram/kind :success})
+```
+
+![A checkout chart: a purple guarded edge "charged [amount matches] / send receipt", review in lilac, paid in green, failed in red](doc/checkout.svg)
+
 ## Install
 
 A git dependency in `bb.edn` or `deps.edn`:
@@ -111,4 +166,7 @@ An invoked chart is a separate session with its own chart and configuration. Dra
 ```bash
 bb test      # needs Graphviz `dot` for the render tests; they are skipped without it
 bb gallery   # renders every test chart to out/*.png
+bb readme-images   # redraws the pictures in this README, doc/*.dot and doc/*.svg
 ```
+
+The SVGs in `doc/` were drawn with Graphviz 12.2, so the traffic light's regions keep their order.
