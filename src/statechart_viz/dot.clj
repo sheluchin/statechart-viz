@@ -9,6 +9,7 @@
     invoke           3D box inside the invoking state, named after the child chart
     initial          dot inside its region, one arrow to the initial child
     guarded edge     coloured, labelled [guard] unless the transition has a :diagram/label
+    fallback edge    labelled [else]: unguarded, after a guarded sibling on the same events
     eventless edge   no event text
     internal / targetless transition   dotted self-loop
     active state     gold fill (leaves) or gold border (containers)
@@ -241,7 +242,8 @@
   (or (:label tr)
       (->> [(not-empty (str/join ", " (map event-text (:events tr))))
             (cond (:condition tr) (str "[" (:condition tr) "]")
-                  (:guarded? tr)  "[guard]")
+                  (:guarded? tr)  "[guard]"
+                  (:else? tr)     "[else]")
             (when (seq (:actions tr)) (str "/ " (str/join ", " (:actions tr))))]
            (remove nil?)
            (str/join " "))))

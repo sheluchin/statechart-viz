@@ -125,6 +125,7 @@ Options for `dot` and `render`:
 | Invoke | Blue 3D box inside the state, named after the child chart |
 | Initial | Dot inside its region, one arrow to the first state |
 | Guarded transition | Purple, marked `[guard]` or `[`*`:diagram/condition`*`]` |
+| Fallback transition | Marked `[else]`: unguarded, after a guarded transition on the same events from the same state |
 | Targetless (internal) transition | Dotted self-loop, or `↺ event` in the label of a container |
 | Transition between a container and its own child | Starts or ends at a small circle at the container's top |
 | Active state | Gold fill, or a gold border on a container |

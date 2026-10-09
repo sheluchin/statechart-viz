@@ -13,7 +13,7 @@ digraph statechart {
   "init_s0" -> "s1" [color="#2b313b" arrowsize=0.7];
   "s1" -> "s2" [label=" pay " color="#5a6472" fontcolor="#1c2230"];
   "s2" -> "s4" [label=" charged [amount matches] / send receipt " color="#7a6bbf" fontcolor="#7a6bbf"];
-  "s2" -> "s3" [label=" charged " color="#5a6472" fontcolor="#1c2230"];
+  "s2" -> "s3" [label=" charged [else] " color="#5a6472" fontcolor="#1c2230"];
   "s2" -> "s5" [label=" declined " color="#5a6472" fontcolor="#1c2230"];
   "s3" -> "s4" [label=" approve " color="#5a6472" fontcolor="#1c2230"];
   "s3" -> "s5" [label=" reject " color="#5a6472" fontcolor="#1c2230"];

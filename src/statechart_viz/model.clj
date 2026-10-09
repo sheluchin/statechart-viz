@@ -140,17 +140,27 @@
   [elems t]
   (vec (keep #(:diagram/label (get elems %)) (:children t))))
 
+(defn- else?
+  "An unguarded transition is its source's fallback when an earlier sibling on
+  the same events is guarded: it is taken only when every such guard is false."
+  [siblings t]
+  (and (nil? (:cond t))
+       (some #(and (:cond %) (= (event-list %) (event-list t)))
+             (take-while #(not= (:id %) (:id t)) siblings))))
+
 (defn transitions
   "Every real transition, in document order. Initial and history default
   transitions are drawn from the tree instead, so they are left out."
   [chart]
-  (let [elems (elements chart)
-        order (document-order chart)]
-    (->> (vals elems)
-         (filter #(= :transition (:node-type %)))
-         (remove #(let [p (get elems (:parent %))]
-                    (or (initial-pseudo? p) (= :history (:node-type p)))))
-         (sort-by #(get order (:id %) Long/MAX_VALUE))
+  (let [elems   (elements chart)
+        order   (document-order chart)
+        ordered (->> (vals elems)
+                     (filter #(= :transition (:node-type %)))
+                     (remove #(let [p (get elems (:parent %))]
+                                (or (initial-pseudo? p) (= :history (:node-type p)))))
+                     (sort-by #(get order (:id %) Long/MAX_VALUE)))
+        by-source (group-by :parent ordered)]
+    (->> ordered
          (mapv (fn [t]
                  (cond-> {:id       (:id t)
                           :source   (:parent t)
@@ -158,6 +168,7 @@
                           :events   (event-list t)
                           :guarded? (some? (:cond t))
                           :internal? (= :internal (:type t))}
+                   (else? (by-source (:parent t)) t) (assoc :else? true)
                    (:diagram/label t)     (assoc :label (:diagram/label t))
                    (:diagram/condition t) (assoc :condition (:diagram/condition t))
                    (seq (action-labels elems t)) (assoc :actions (action-labels elems t))))))))

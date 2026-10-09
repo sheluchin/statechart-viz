@@ -11,7 +11,7 @@ digraph statechart {
   "s3" [color="#b8860b" fillcolor="#ffe08a" penwidth=2.5 style="rounded,filled" label="tails" id="state:coin/tails" class="sv-state" shape="box"];
   "init_s0" -> "s1" [color="#2b313b" arrowsize=0.7];
   "s1" -> "s2" [label=" [rand < ½] " color="#7a6bbf" fontcolor="#7a6bbf"];
-  "s1" -> "s3" [color="#5a6472" fontcolor="#1c2230"];
+  "s1" -> "s3" [label=" [else] " color="#5a6472" fontcolor="#1c2230"];
   "s2" -> "s1" [label=" flip " color="#5a6472" fontcolor="#1c2230"];
   "s3" -> "s1" [label=" flip " color="#5a6472" fontcolor="#1c2230"];
 }

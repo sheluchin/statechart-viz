@@ -88,6 +88,12 @@
   (testing "several events are listed"
     (is (str/includes? (viz/dot f/parallel-chart) "what-done, timeout"))))
 
+(deftest a-fallback-transition-reads-else
+  (let [dot (viz/dot f/flat)]
+    (is (str/includes? dot "label=\" [else] \"") "triage's unguarded branch after the guarded one")
+    (is (= 1 (count-of #"\[else\]" dot)))
+    (is (not (str/includes? (viz/dot f/nested) "[else]")) "an unguarded transition with no guarded sibling is not a fallback")))
+
 (deftest internal-transition-on-a-container-goes-in-its-label
   (let [dot (viz/dot f/nested)]
     (is (str/includes? dot "label=\"work\\n↺ tick\""))
