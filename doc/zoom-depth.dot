@@ -18,8 +18,8 @@ subgraph "cluster_s1" {
   "s8" [color="#5a7a99" fillcolor="#ffffff" penwidth=1.2 style="rounded,filled" label="off" id="state:player/off" class="sv-state" shape="box"];
 }
   "s9" [color="#5a7a99" fillcolor="#ffffff" penwidth=1.2 style="rounded,filled" peripheries=2 label="unplugged" id="state:player/unplugged" class="sv-state" shape="box"];
-  "init_s1" -> "s2" [color="#2b313b" arrowsize=0.7];
   "init_s0" -> "s1" [lhead="cluster_s1" color="#2b313b" arrowsize=0.7];
+  "init_s1" -> "s2" [color="#2b313b" arrowsize=0.7];
   "s1" -> "s9" [label=" unplug " ltail="cluster_s1" color="#5a6472" fontcolor="#1c2230"];
   "s2" -> "s8" [label=" power " color="#5a6472" fontcolor="#1c2230"];
   "s8" -> "s2" [label=" power " color="#5a6472" fontcolor="#1c2230"];

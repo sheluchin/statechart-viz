@@ -87,7 +87,23 @@
       (or (first (:target t))
           (:id (first (remove initial-pseudo? (filter #(state-types (:node-type %)) kids))))))))
 
-(defn- build-node [elems order el]
+(defn- id-str [id] (if (keyword? id) (subs (str id) 1) (str id)))
+
+(defn- child-keys
+  "A stable key per child state: its id, or for an unnamed one (whose
+  generated id changes every run) the parent's key, its type and its place
+  among unnamed siblings of that type: `@parallel.1`, `lights@state.2`."
+  [parent-key states]
+  (let [seen (volatile! {})]
+    (mapv (fn [c]
+            (if (generated-id? c)
+              (let [t (:node-type c)
+                    n (get (vswap! seen update t (fnil inc 0)) t)]
+                (str parent-key "@" (name t) "." n))
+              (id-str (:id c))))
+          states)))
+
+(defn- build-node [elems order el key]
   (let [id     (:id el)
         kids   (children-of elems order id)
         states (->> kids
@@ -97,9 +113,10 @@
         hist   (when (= :history (:node-type el))
                  (first (filter #(= :transition (:node-type %)) kids)))]
     (cond-> {:id       id
+             :key      key
              :kind     (:node-type el)
              :label    (label el)
-             :children (mapv #(build-node elems order %) states)}
+             :children (mapv #(build-node elems order %1 %2) states (child-keys key states))}
       (:diagram/kind el) (assoc :style-kind (:diagram/kind el))
       (seq states)       (assoc :initial (initial-target elems order el kids))
       (seq invs)         (assoc :invokes (mapv (fn [iv] {:id    (:id iv)
@@ -115,7 +132,7 @@
   (let [elems (elements chart)
         order (document-order chart)
         root  {:id :ROOT :node-type :state}]
-    (assoc (build-node elems order root) :kind :root :label "chart")))
+    (assoc (build-node elems order root "") :kind :root :label "chart")))
 
 (defn- action-labels
   "`:diagram/label`s of a transition's executable content, as the statecharts

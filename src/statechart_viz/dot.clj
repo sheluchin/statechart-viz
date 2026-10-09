@@ -32,11 +32,12 @@
 
 (defn- q [s] (str "\"" (esc s) "\""))
 
-(defn- svg-id
-  "SVG element id for a state, so a viewer can map a click back to it:
-  `:intake/handling` -> `state:intake/handling`."
-  [id]
-  (str "state:" (if (keyword? id) (subs (str id) 1) (str id))))
+(defn svg-id
+  "SVG element id for a tree node, so a viewer can map a click back to it:
+  `:intake/handling` -> `state:intake/handling`. An unnamed state gets one
+  from its place in the chart, `state:@parallel.1`, stable across runs."
+  [node]
+  (str "state:" (:key node)))
 
 (defn- attrs [m]
   (str "["
@@ -57,6 +58,12 @@
   "Stable, DOT-safe ids by tree position: s0, s1, ..."
   [tree]
   (into {} (map-indexed (fn [i id] [id (str "s" i)]) (preorder-ids tree))))
+
+(defn- in-tree-order
+  "The index's nodes in tree order. The index is a map keyed by id, and an
+  unnamed state's id changes every run, so its own order is not stable."
+  [ctx]
+  (sort-by #(parse-long (subs (get (:ids ctx) (:id %)) 1)) (vals (:idx ctx))))
 
 (defn- collapsed?
   [ctx node]
@@ -119,7 +126,7 @@
     (case (:kind node)
       :history
       (str "  " (q id) " "
-           (attrs {:id        (svg-id (:id node)) :class "sv-state"
+           (attrs {:id        (svg-id node) :class "sv-state"
                    :label     (if (= :deep (:history-type node)) "H*" "H")
                    :shape     "circle" :width 0.3 :fixedsize "true"
                    :fontsize  10 :style "filled"
@@ -127,7 +134,7 @@
                    :color     (if active? (:active-border t) (:state-border t))})
            ";\n")
       (str "  " (q id) " "
-           (attrs {:id         (svg-id (:id node)) :class "sv-state"
+           (attrs {:id         (svg-id node) :class "sv-state"
                    :label      (:label node)
                    :shape      "box"
                    :style      "rounded,filled"
@@ -142,7 +149,7 @@
         active? (subtree-active? ctx node)
         n       (count-states node)]
     (str "  " (q (get (:ids ctx) (:id node))) " "
-         (attrs {:id        (svg-id (:id node)) :class "sv-collapsed"
+         (attrs {:id        (svg-id node) :class "sv-collapsed"
                  :label     (str (:label node) "\n⊞ " n (if (= 1 n) " state" " states"))
                  :shape     "box"
                  :style     "rounded,filled,bold"
@@ -183,7 +190,7 @@
         active?  (contains? (:active ctx) (:id node))
         par?     (= :parallel (:kind node))]
     (str "subgraph " (q (str "cluster_" id)) " {\n"
-         "  id=" (q (svg-id (:id node))) "; class=\"sv-container\";\n"
+         "  id=" (q (svg-id node)) "; class=\"sv-container\";\n"
          "  label=" (q (str/join "\n" (cons (if par? (str (:label node) "   ∥") (:label node))
                                             (loop-labels ctx node)))) ";\n"
          "  labeljust=\"l\"; labelloc=\"t\"; fontsize=" (:font-size t) ";\n"
@@ -304,7 +311,7 @@
      :lines (apply str
                    (for [g ghosts]
                      (str "  " (q (get ids g)) " "
-                          (attrs {:id        (str "stub:" (subs (svg-id g) 6)) :class "sv-stub"
+                          (attrs {:id        (str "stub:" (:key (get (:idx ctx) g))) :class "sv-stub"
                                   :label     (str "↗ " (:label (get (:idx ctx) g)))
                                   :shape     "plaintext"
                                   :fontcolor (:muted t)
@@ -332,7 +339,7 @@
 (defn- initial-edges [ctx]
   (let [t (:theme ctx)]
     (apply str
-           (for [node (vals (:idx ctx))
+           (for [node (in-tree-order ctx)
                  :let [target (:initial node)]
                  :when (and target
                             (m/compound? node)
@@ -349,7 +356,7 @@
 (defn- history-edges [ctx]
   (let [t (:theme ctx)]
     (apply str
-           (for [node (vals (:idx ctx))
+           (for [node (in-tree-order ctx)
                  :when (and (= :history (:kind node)) (:default-target node)
                             (= (:id node) (representative ctx (:id node))))
                  :let [rep (representative ctx (:default-target node))]

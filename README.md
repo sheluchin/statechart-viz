@@ -79,8 +79,8 @@ Rendering to PNG or SVG needs the Graphviz `dot` binary on PATH. `dot` text outp
 
 Use a recent Graphviz. Graphviz 2.43, the version in Ubuntu's apt repositories, lays sibling
 clusters out right to left, so a parallel state's regions appear in reverse order. Graphviz 12.2
-(for example the WASM build in `@viz-js/viz`) keeps them in chart order. The DOT is the same
-either way.
+and later keep them in chart order. The DOT is the same either way. With Nix, `nix develop` in
+this repo gives a shell with a pinned Graphviz 15.1.1 (see [Develop](#develop)).
 
 ```clojure
 (require '[statechart-viz.core :as viz])
@@ -98,8 +98,8 @@ either way.
 |---|---|
 | `(dot chart opts)` | Graphviz DOT text |
 | `(render chart opts)` | `{:ok bytes}` or `{:error message}`, using the `dot` binary; adds `:format` (`:png`, `:svg`) and `:dpi` |
-| `(outline chart active)` | The state tree as data: `{:id :label :kind :active? :invokes :children}` |
-| `(zoom-targets chart)` | Every container you can zoom into, outermost first, with its `:path` of labels. For a nav menu |
+| `(outline chart active)` | The state tree as data: `{:id :label :kind :svg-id :active? :invokes :children}` |
+| `(zoom-targets chart)` | Every container you can zoom into, outermost first, with its `:path` of labels and its `:svg-id`. For a nav menu |
 | `(session-dot env session-id opts)` | DOT for a running session: its chart from the env's registry, its active states from the working-memory store. Nil if the store has no such session |
 | `(render-session env session-id opts)` | `render` for a running session; `{:error "No session …"}` if there is none |
 | `(session-tree env session-id)` | The session and the charts it invoked, recursively: `{:session-id :src :active :parent :children}` |
@@ -131,7 +131,10 @@ Options for `dot` and `render`:
 
 Labels default to the last segment of the id: `:round1.heads.round2` reads `round2` inside `heads`.
 A state with no `:id` reads as its type (`parallel`), not the id the statecharts library generates
-for it (see [Annotating a chart](#annotating-a-chart)). A generated id is a bare keyword of the type
+for it (see [Annotating a chart](#annotating-a-chart)). That generated id changes every time the
+chart is compiled, so the library never draws it: an unnamed state's SVG id comes from its place in
+the chart instead, such as `state:@parallel.1` for the first unnamed parallel at the top, and the
+same chart draws byte-identical output in every process. A generated id is a bare keyword of the type
 plus digits, such as `:parallel29883`, so an explicit id of that exact shape is labelled the same way.
 Platform events keep their full name (`done.state.decide`).
 
@@ -177,9 +180,11 @@ each with its own call, and pass a `:title` that says where it came from:
 ## Develop
 
 ```bash
+nix develop  # optional: a shell with the pinned Graphviz, babashka and a JDK from flake.lock
 bb test      # needs Graphviz `dot` for the render tests; they are skipped without it
 bb gallery   # renders every test chart to out/*.png
 bb readme-images   # redraws the pictures in this README, doc/*.dot and doc/*.svg
 ```
 
-The SVGs in `doc/` were drawn with Graphviz 12.2, so the traffic light's regions keep their order.
+The SVGs in `doc/` were drawn by `bb readme-images` inside `nix develop`, with Graphviz 15.1.1.
+`nix flake update` moves the pin.

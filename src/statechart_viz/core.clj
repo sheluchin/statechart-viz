@@ -25,31 +25,34 @@
   ([chart opts] (d/dot chart opts)))
 
 (defn- outline-node [node active]
-  (cond-> {:id    (:id node)
-           :label (:label node)
-           :kind  (:kind node)}
+  (cond-> {:id     (:id node)
+           :label  (:label node)
+           :kind   (:kind node)}
+    (not= :root (:kind node)) (assoc :svg-id (d/svg-id node))
     (contains? active (:id node)) (assoc :active? true)
     (seq (:invokes node)) (assoc :invokes (mapv #(select-keys % [:id :src :label]) (:invokes node)))
     (seq (:children node)) (assoc :children (mapv #(outline-node % active) (:children node)))))
 
 (defn outline
-  "The chart's states as nested data: {:id :label :kind :active? :invokes :children}.
-  Pass a configuration as `active` to mark the active states."
+  "The chart's states as nested data: {:id :label :kind :svg-id :active? :invokes :children}.
+  `:svg-id` is the id of the state's element in the SVG. Pass a configuration
+  as `active` to mark the active states."
   ([chart] (outline chart #{}))
   ([chart active]
    (outline-node (m/tree chart) (set active))))
 
 (defn zoom-targets
   "Containers you can zoom into, outermost first:
-  [{:id :label :kind :path [labels from the top] :states n}]"
+  [{:id :label :kind :svg-id :path [labels from the top] :states n}]"
   [chart]
   (let [tree (m/tree chart)
         idx  (m/index tree)]
     (->> (vals idx)
          (filter #(and (not= :root (:kind %)) (m/compound? %)))
-         (sort-by (juxt :depth #(str (:id %))))
+         (sort-by (juxt :depth :key))
          (mapv (fn [n]
                  {:id     (:id n)
+                  :svg-id (d/svg-id n)
                   :label  (:label n)
                   :kind   (:kind n)
                   :path   (->> (cons (:id n) (m/ancestors-of idx (:id n)))

@@ -30,7 +30,7 @@
                :src        src
                :chart      chart
                :active     active
-               :children   (vec (for [node  (vals (m/index (m/tree chart)))
+               :children   (vec (for [node  (sort-by :key (vals (m/index (m/tree chart))))
                                       :when (contains? active (:id node))
                                       iv    (:invokes node)
                                       :when (and (:id iv) (working-memory env (:id iv)))]

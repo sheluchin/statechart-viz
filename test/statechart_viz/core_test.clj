@@ -2,6 +2,9 @@
   (:require
    [clojure.string :as str]
    [clojure.test :refer [deftest is testing]]
+   [com.fulcrologic.statecharts :as sc]
+   [com.fulcrologic.statecharts.chart :refer [statechart]]
+   [com.fulcrologic.statecharts.elements :refer [parallel state]]
    [statechart-viz.core :as viz]
    [statechart-viz.fixtures :as f]
    [statechart-viz.render :as r]))
@@ -122,6 +125,32 @@
   (testing "collapsed boxes and stubs are marked too"
     (is (str/includes? (viz/dot f/nested {:depth 1}) "id=\"state:app\" class=\"sv-collapsed\""))
     (is (str/includes? (viz/dot f/nested {:focus :app/running}) "id=\"stub:app/paused\" class=\"sv-stub\""))))
+
+(defn- lights
+  "Compiles a fresh copy each call, so its unnamed states get new generated ids."
+  []
+  (statechart {}
+              (parallel {}
+                        (state {:id :ew} (state {:id :ew/green}))
+                        (state {} (state {:id :ns/red}) (state {:id :ns/green}))
+                        (state {} (state {:id :walk/off})))))
+
+(deftest unnamed-states-get-stable-svg-ids
+  (let [a (lights) b (lights)]
+    (is (not= (keys (::sc/elements-by-id a)) (keys (::sc/elements-by-id b)))
+        "two compiles really do generate different ids")
+    (is (= (viz/dot a {:active #{:ew/green}}) (viz/dot b {:active #{:ew/green}}))
+        "but draw the same DOT")
+    (let [dot (viz/dot a)]
+      (is (str/includes? dot "id=\"state:@parallel.1\"; class=\"sv-container\""))
+      (is (str/includes? dot "id=\"state:@parallel.1@state.1\""))
+      (is (str/includes? dot "id=\"state:@parallel.1@state.2\""))
+      (is (str/includes? dot "id=\"state:ew\"") "named states keep their id")
+      (is (not (re-find #"(parallel|state)\d+" dot)) "no generated id anywhere"))
+    (testing "outline and zoom-targets carry the same svg ids, to map clicks back"
+      (is (= ["state:@parallel.1" "state:@parallel.1@state.1" "state:@parallel.1@state.2" "state:ew"]
+             (mapv :svg-id (viz/zoom-targets a))))
+      (is (= "state:@parallel.1" (-> (viz/outline a) :children first :svg-id))))))
 
 (deftest outline-and-zoom-targets
   (let [o (viz/outline f/nested #{:work/b})]
