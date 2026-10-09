@@ -36,6 +36,11 @@
     (testing ":diagram/label wins, and quotes are escaped"
       (is (str/includes? dot "label=\"step \\\"A\\\"\"")))))
 
+(deftest unnamed-states-read-as-their-type
+  (let [dot (viz/dot f/unnamed)]
+    (is (str/includes? dot "label=\"parallel   ∥\""))
+    (is (not (re-find #"parallel\d+   ∥" dot)))))
+
 (deftest active-states-are-highlighted
   (let [dot (viz/dot f/flat {:active #{:gate/triage}})]
     (is (str/includes? (line-for dot "triage") "#ffe08a"))

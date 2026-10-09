@@ -73,5 +73,13 @@
                             (transition {:event :finish :target :game/over}))
                      (final {:id :game/over :diagram/label "Game Over"}))))
 
+(def unnamed
+  "A parallel state with no :id, as in the statecharts docs' traffic light."
+  (statechart {}
+              (parallel {}
+                        (state {:id :ew} (state {:id :ew/green}))
+                        (state {:id :ns} (state {:id :ns/red})))))
+
 (def all
-  {:flat flat :nested nested :parallel parallel-chart :invoke with-invoke :child child})
+  {:flat flat :nested nested :parallel parallel-chart :invoke with-invoke :child child
+   :unnamed unnamed})

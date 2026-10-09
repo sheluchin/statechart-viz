@@ -17,6 +17,11 @@ A git dependency in `bb.edn` or `deps.edn`:
 
 Rendering to PNG or SVG needs the Graphviz `dot` binary on PATH. `dot` text output does not.
 
+Use a recent Graphviz. Graphviz 2.43, the version in Ubuntu's apt repositories, lays sibling
+clusters out right to left, so a parallel state's regions appear in reverse order. Graphviz 12.2
+(for example the WASM build in `@viz-js/viz`) keeps them in chart order. The DOT is the same
+either way.
+
 ```clojure
 (require '[statechart-viz.core :as viz])
 
@@ -61,6 +66,9 @@ Options for `dot` and `render`:
 | Active state | Gold fill, or a gold border on a container |
 
 Labels default to the last segment of the id: `:round1.heads.round2` reads `round2` inside `heads`.
+A state with no `:id` reads as its type (`parallel`), not the id the statecharts library generates
+for it. That id is a bare keyword of the type plus digits, such as `:parallel29883`, so an explicit
+id of that exact shape is labelled the same way.
 Platform events keep their full name (`done.state.decide`).
 
 ## Annotating a chart

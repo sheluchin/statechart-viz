@@ -46,10 +46,20 @@
   (let [n (if (keyword? id) (name id) (str id))]
     (last (str/split n #"[/.]"))))
 
-(defn label
-  "Display text for an element."
+(defn generated-id?
+  "True for an id the statecharts library made up because the chart gave
+  none: `(genid \"parallel\")` gives `:parallel29883`, and the number
+  changes every run."
   [el]
-  (or (:diagram/label el) (default-label (:id el))))
+  (let [id (:id el) t (:node-type el)]
+    (boolean (and (keyword? id) (nil? (namespace id)) (keyword? t)
+                  (re-matches (re-pattern (str "\\Q" (name t) "\\E\\d+")) (name id))))))
+
+(defn label
+  "Display text for an element. An unnamed element reads as its type."
+  [el]
+  (or (:diagram/label el)
+      (if (generated-id? el) (name (:node-type el)) (default-label (:id el)))))
 
 (defn- src-label [src]
   (cond (symbol? src) (let [ns-part (namespace src)
