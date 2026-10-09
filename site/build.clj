@@ -3,7 +3,9 @@
   library, the statecharts namespaces it needs and the shims in site/shims,
   in dependency order, plus the app and the examples. Writes them all as
   strings into site/vendor/bundle.js, which a <script> tag loads, so the
-  page works from file:// with no server."
+  page works from file:// with no server. Also writes
+  site/vendor/playground.html: index.html with the bundle inlined, one file
+  to send someone."
   (:require
    [clojure.java.io :as io]
    [clojure.string :as str]
@@ -78,7 +80,15 @@
         bundle   {:libs     (cons ["prelude.cljs" (slurp "site/shims/prelude.cljs")] libs)
                   :app      (slurp "site/app.cljs")
                   :examples examples}
-        out      (io/file "site/vendor/bundle.js")]
+        ;; "<\/" keeps a "</script>" inside a source string from ending the inline tag
+        js       (str "window.STATECHART_VIZ = "
+                      (str/replace (json/generate-string bundle) "</" "<\\/") ";\n")
+        out      (io/file "site/vendor/bundle.js")
+        single   (io/file "site/vendor/playground.html")]
     (io/make-parents out)
-    (spit out (str "window.STATECHART_VIZ = " (json/generate-string bundle) ";\n"))
-    (println "Wrote" (count libs) "namespaces and" (count examples) "examples to" (str out))))
+    (spit out js)
+    (spit single (str/replace (slurp "site/index.html")
+                              "<script src=\"vendor/bundle.js\"></script>"
+                              (str "<script>\n" js "</script>")))
+    (println "Wrote" (count libs) "namespaces and" (count examples) "examples to" (str out))
+    (println "Wrote the single-file page to" (str single))))
