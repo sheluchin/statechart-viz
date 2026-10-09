@@ -3,8 +3,9 @@
   with Graphviz `dot` on PATH, doc/<name>.svg. The traffic light is the
   example from https://fulcrologic.github.io/statecharts/, run for real.
 
-  The SVGs in the repo were drawn with Graphviz 12.2. Graphviz 2.43 draws
-  the traffic light's regions in reverse order (see README.md)."
+  The SVGs in the repo were drawn inside `nix develop`, with the Graphviz
+  flake.lock pins. Graphviz 2.43 draws the traffic light's regions in reverse
+  order (see README.md)."
   (:require
    [clojure.java.io :as io]
    [com.fulcrologic.statecharts :as sc]
