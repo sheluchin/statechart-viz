@@ -44,7 +44,7 @@ nav menu.
 
 ### Invoked charts
 
-A state that invokes another chart shows it as a blue box named after the child chart. The child
+A state that invokes another chart lists it as `⤵ child` in a dashed blue box. The child
 is its own session, so you draw it with its own call, and a `:title` says where it lives.
 `session-tree` finds the children of a running session, for a menu of them.
 
@@ -122,7 +122,7 @@ Options for `dot` and `render`:
 | Parallel state | Dashed box marked `∥`; its regions side by side |
 | Final state | Double border |
 | History | `H` or `H*` circle, dotted arrow to its default |
-| Invoke | Blue 3D box inside the state, named after the child chart |
+| Invoke | A state that only invokes is one dashed blue box, `⤵ child` under its name. In a state with child states, a blue 3D box inside it |
 | Initial | Dot inside its region, one arrow to the first state |
 | Guarded transition | Purple, marked `[guard]` or `[`*`:diagram/condition`*`]` |
 | Fallback transition | Marked `[else]`: unguarded, after a guarded transition on the same events from the same state |

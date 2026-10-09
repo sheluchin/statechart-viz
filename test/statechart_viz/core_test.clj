@@ -4,7 +4,7 @@
    [clojure.test :refer [deftest is testing]]
    [com.fulcrologic.statecharts :as sc]
    [com.fulcrologic.statecharts.chart :refer [statechart]]
-   [com.fulcrologic.statecharts.elements :refer [parallel state]]
+   [com.fulcrologic.statecharts.elements :refer [invoke parallel state]]
    [statechart-viz.core :as viz]
    [statechart-viz.fixtures :as f]
    [statechart-viz.render :as r]))
@@ -64,8 +64,14 @@
   (testing "history is an H circle with a dotted edge to its default"
     (let [dot (viz/dot f/nested)]
       (is (str/includes? (line-for dot "H") "shape=\"circle\""))))
-  (testing "an invoke is a 3D box named after the child chart"
-    (is (str/includes? (viz/dot f/with-invoke) "label=\"⤵ child\" shape=\"box3d\""))))
+  (testing "a state that only invokes is one dashed box listing the child chart"
+    (is (str/includes? (line-for (viz/dot f/with-invoke) "Playing\\n⤵ child") "class=\"sv-state sv-invokes\"")))
+  (testing "a state with child states shows its invoke as a 3D box inside it"
+    (is (str/includes? (viz/dot (statechart {}
+                                            (state {:id :p}
+                                                   (invoke {:id :p.c :type :statechart :src `f/child})
+                                                   (state {:id :p/a}))))
+                       "label=\"⤵ child\" shape=\"box3d\""))))
 
 (deftest top-level-siblings-are-all-drawn
   ;; the old ambient renderer drew only the first top-level state and lost :ambient/off
@@ -125,9 +131,9 @@
 (deftest svg-ids-map-clicks-back-to-states
   (let [dot (viz/dot f/with-invoke {:depth 2})]
     (testing "containers, states and invokes carry ids a viewer can read"
-      (is (str/includes? dot "id=\"state:game/playing\"; class=\"sv-container\""))
-      (is (str/includes? (line-for dot "Game Over") "id=\"state:game/over\" class=\"sv-state\""))
-      (is (str/includes? dot "id=\"invoke:statechart-viz.fixtures/child\" class=\"sv-invoke\""))))
+      (is (str/includes? dot "id=\"state:game\"; class=\"sv-container\""))
+      (is (str/includes? dot "id=\"state:game/playing\" class=\"sv-state sv-invokes\""))
+      (is (str/includes? (line-for dot "Game Over") "id=\"state:game/over\" class=\"sv-state\""))))
   (testing "collapsed boxes and stubs are marked too"
     (is (str/includes? (viz/dot f/nested {:depth 1}) "id=\"state:app\" class=\"sv-collapsed\""))
     (is (str/includes? (viz/dot f/nested {:focus :app/running}) "id=\"stub:app/paused\" class=\"sv-stub\""))))

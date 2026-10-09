@@ -134,16 +134,18 @@
                    :fillcolor (fill-for ctx node active?)
                    :color     (if active? (:active-border t) (:state-border t))})
            ";\n")
-      (str "  " (q id) " "
-           (attrs {:id         (svg-id node) :class "sv-state"
-                   :label      (:label node)
-                   :shape      "box"
-                   :style      "rounded,filled"
-                   :peripheries (when (= :final (:kind node)) 2)
-                   :fillcolor  (fill-for ctx node active?)
-                   :color      (if active? (:active-border t) (:state-border t))
-                   :penwidth   (if active? 2.5 1.2)})
-           ";\n"))))
+      (let [invokes (:invokes node)]
+        (str "  " (q id) " "
+             (attrs {:id         (svg-id node) :class (if (seq invokes) "sv-state sv-invokes" "sv-state")
+                     ;; a state that only invokes lists its charts under its name
+                     :label      (str/join "\n" (cons (:label node) (map #(str "⤵ " (:label %)) invokes)))
+                     :shape      "box"
+                     :style      (if (seq invokes) "rounded,filled,dashed" "rounded,filled")
+                     :peripheries (when (= :final (:kind node)) 2)
+                     :fillcolor  (cond active? (:active-fill t) (seq invokes) (:invoke-fill t) :else (fill-for ctx node active?))
+                     :color      (cond active? (:active-border t) (seq invokes) (:invoke-border t) :else (:state-border t))
+                     :penwidth   (if active? 2.5 1.2)})
+             ";\n")))))
 
 (defn- collapsed-line [ctx node]
   (let [t       (:theme ctx)

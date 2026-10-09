@@ -194,6 +194,7 @@
   (boolean (some #{ancestor} (ancestors-of idx id))))
 
 (defn compound?
-  "A state drawn as a container: it has child states or invokes a chart."
+  "A state drawn as a container: it has child states. A state that only
+  invokes charts is drawn as one box listing them."
   [node]
-  (boolean (or (seq (:children node)) (seq (:invokes node)))))
+  (boolean (seq (:children node))))
