@@ -60,32 +60,42 @@ Options for `dot` and `render`:
 | History | `H` or `H*` circle, dotted arrow to its default |
 | Invoke | Blue 3D box inside the state, named after the child chart |
 | Initial | Dot inside its region, one arrow to the first state |
-| Guarded transition | Purple, marked `[guard]` |
+| Guarded transition | Purple, marked `[guard]` or `[`*`:diagram/condition`*`]` |
 | Targetless (internal) transition | Dotted self-loop, or `↺ event` in the label of a container |
 | Transition between a container and its own child | Starts or ends at a small circle at the container's top |
 | Active state | Gold fill, or a gold border on a container |
 
 Labels default to the last segment of the id: `:round1.heads.round2` reads `round2` inside `heads`.
 A state with no `:id` reads as its type (`parallel`), not the id the statecharts library generates
-for it. That id is a bare keyword of the type plus digits, such as `:parallel29883`, so an explicit
-id of that exact shape is labelled the same way.
+for it (see [Annotating a chart](#annotating-a-chart)). A generated id is a bare keyword of the type
+plus digits, such as `:parallel29883`, so an explicit id of that exact shape is labelled the same way.
 Platform events keep their full name (`done.state.decide`).
 
 ## Annotating a chart
 
-Optional keys on any element:
+A diagram is only as clear as the chart's ids and annotations, and those are up to the chart's
+author. The library draws what it can without them: a label from the id, `[guard]` for a guard,
+and a state's type when it has no `:id`. Annotate the chart to do better.
+
+The first keys are the statecharts library's own diagram conventions (`chart/diagram-label`,
+`chart/transition-label`), so one set of annotations serves its visualizer and this one:
 
 ```clojure
-(state {:id :gate/reply :diagram/label "Reply" :diagram/kind :success})
-(transition {:cond addressed? :target :gate/reply :diagram/label "addressed?"})
+(parallel {:id :lights :diagram/label "Traffic lights"} ...)              ; instead of "parallel"
+(transition {:event :open :cond unlocked? :target :door/open
+             :diagram/condition "unlocked?"}                              ; open [unlocked?] / chime
+  (script {:expr ring! :diagram/label "chime"}))
+(state {:id :gate/reply :diagram/kind :success})                          ; green fill
 ```
 
-- `:diagram/label`: display text for a state, transition or invoke.
-- `:diagram/kind`: a fill colour from the theme's `:kinds`: `:success`, `:failure`, `:decision`,
-  `:waiting`, `:neutral`. Add your own with `{:theme {:kinds {:mine "#hex"}}}`.
-
-Guards are functions, so the diagram cannot name them; give a guarded transition a
-`:diagram/label` to say what it checks.
+| Key | On | Effect |
+|---|---|---|
+| `:id` | any state | The label, by its last segment. Give every state one: an unnamed state is labelled by its type, and the statecharts library's own tools show a generated id like `:parallel29883` |
+| `:diagram/label` | state, invoke | The label |
+| `:diagram/label` | transition | The whole edge text |
+| `:diagram/condition` | transition | What the guard checks, shown as `[text]`. Guards are functions, so without it the edge only says `[guard]` |
+| `:diagram/label` | executable content in a transition | An action, shown as `/ text` |
+| `:diagram/kind` | state | This library only: a fill colour from the theme's `:kinds`: `:success`, `:failure`, `:decision`, `:waiting`, `:neutral`. Add your own with `{:theme {:kinds {:mine "#hex"}}}` |
 
 ## Zooming into invoked charts
 

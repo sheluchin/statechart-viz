@@ -4,9 +4,13 @@
   this model, never the element map, so the library knows nothing about any
   particular chart.
 
-  Charts can annotate elements with optional `:diagram/*` keys:
-    :diagram/label  display text for a state or a transition
-    :diagram/kind   a keyword the theme maps to a fill colour, e.g. :success"
+  Charts can annotate elements with optional `:diagram/*` keys. The first two
+  are the statecharts library's own conventions (see its chart/diagram-label
+  and chart/transition-label):
+    :diagram/label      display text for a state, a transition, or an action
+                        inside a transition
+    :diagram/condition  what a transition's guard checks, shown as [text]
+    :diagram/kind       ours: a keyword the theme maps to a fill colour"
   (:require
    [clojure.string :as str]
    [com.fulcrologic.statecharts :as sc]))
@@ -113,6 +117,12 @@
         root  {:id :ROOT :node-type :state}]
     (assoc (build-node elems order root) :kind :root :label "chart")))
 
+(defn- action-labels
+  "`:diagram/label`s of a transition's executable content, as the statecharts
+  library's own visualizer reads them."
+  [elems t]
+  (vec (keep #(:diagram/label (get elems %)) (:children t))))
+
 (defn transitions
   "Every real transition, in document order. Initial and history default
   transitions are drawn from the tree instead, so they are left out."
@@ -131,7 +141,9 @@
                           :events   (event-list t)
                           :guarded? (some? (:cond t))
                           :internal? (= :internal (:type t))}
-                   (:diagram/label t) (assoc :label (:diagram/label t))))))))
+                   (:diagram/label t)     (assoc :label (:diagram/label t))
+                   (:diagram/condition t) (assoc :condition (:diagram/condition t))
+                   (seq (action-labels elems t)) (assoc :actions (action-labels elems t))))))))
 
 (defn index
   "id -> node, plus :parent links, for every node in the tree."

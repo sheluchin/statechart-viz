@@ -80,6 +80,8 @@
       (is (str/includes? dot "color=\"#7a6bbf\""))))
   (testing ":diagram/label replaces the generated text"
     (is (str/includes? (viz/dot f/flat) "label=\" addressed? \"")))
+  (testing ":diagram/condition and action labels, in the statecharts library's form"
+    (is (str/includes? (viz/dot f/annotated) "label=\" open [unlocked?] / log-open, chime \"")))
   (testing "several events are listed"
     (is (str/includes? (viz/dot f/parallel-chart) "what-done, timeout"))))
 

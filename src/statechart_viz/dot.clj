@@ -227,10 +227,17 @@
         (some-> (namespace e) (str/starts-with? "error.")) (subs (str e) 1)
         :else (name e)))
 
-(defn- edge-label [tr]
+(defn- edge-label
+  "`event [condition] / action, action`, the statecharts library's own form.
+  A transition's :diagram/label replaces all of it."
+  [tr]
   (or (:label tr)
-      (let [evs (str/join ", " (map event-text (:events tr)))]
-        (str/trim (str evs (when (:guarded? tr) " [guard]"))))))
+      (->> [(not-empty (str/join ", " (map event-text (:events tr))))
+            (cond (:condition tr) (str "[" (:condition tr) "]")
+                  (:guarded? tr)  "[guard]")
+            (when (seq (:actions tr)) (str "/ " (str/join ", " (:actions tr))))]
+           (remove nil?)
+           (str/join " "))))
 
 (defn- endpoint
   "DOT id for a drawn endpoint, plus the cluster to clip to when it is a container."

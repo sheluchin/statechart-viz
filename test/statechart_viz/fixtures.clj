@@ -2,7 +2,7 @@
   "Small charts that between them use every element the library draws."
   (:require
    [com.fulcrologic.statecharts.chart :refer [statechart]]
-   [com.fulcrologic.statecharts.elements :refer [state parallel final transition history invoke]]))
+   [com.fulcrologic.statecharts.elements :refer [state parallel final transition history invoke script]]))
 
 (defn- yes? [_ _] true)
 
@@ -80,6 +80,16 @@
                         (state {:id :ew} (state {:id :ew/green}))
                         (state {:id :ns} (state {:id :ns/red})))))
 
+(def annotated
+  "Annotated the way the statecharts library's own visualizer reads charts."
+  (statechart {}
+              (state {:id :door/closed}
+                     (transition {:event :open :cond yes? :target :door/open
+                                  :diagram/condition "unlocked?"}
+                                 (script {:expr (fn [_ _] nil) :diagram/label "log-open"})
+                                 (script {:expr (fn [_ _] nil) :diagram/label "chime"})))
+              (state {:id :door/open})))
+
 (def all
   {:flat flat :nested nested :parallel parallel-chart :invoke with-invoke :child child
-   :unnamed unnamed})
+   :unnamed unnamed :annotated annotated})
