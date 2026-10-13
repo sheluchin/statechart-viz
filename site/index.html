@@ -58,6 +58,7 @@
     #sv-about h2 { font-size: 15px; margin: 0 0 8px; }
     #sv-about p { margin: 0 0 8px; }
     #sv-about a { color: var(--accent); }
+    #sv-about code { font: 12px ui-monospace, Menlo, monospace; }
     #sv-about .build { margin: 10px 0 0; color: var(--muted); font: 11px ui-monospace, Menlo, monospace; }
   </style>
 </head>
@@ -77,6 +78,9 @@
       Graphviz diagram, with the active states highlighted.</p>
     <p>Edit the code, Run, and click events to step the chart. Share copies a link that opens your
       chart.</p>
+    <p>Link to your own chart without opening the page first: add
+      <code>#src=</code> and the raw URL of a <code>.cljs</code> file, e.g. a gist.
+      <a href="https://github.com/sheluchin/statechart-viz#linking-to-a-chart">More ways</a>.</p>
     <p>Your code runs in your browser with <a href="https://github.com/babashka/sci">SCI</a>
       (<a href="https://github.com/babashka/scittle">Scittle</a>); nothing is sent to a server.</p>
     <p class="links">
