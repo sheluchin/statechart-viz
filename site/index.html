@@ -8,11 +8,13 @@
     :root {
       --bg: #f7f8fa; --panel: #ffffff; --text: #1c2230; --muted: #6b7484;
       --border: #d5dae1; --accent: #5a7a99; --error: #b3261e; --error-bg: #fdecea;
+      --notice-bg: #eef3f8;
     }
     @media (prefers-color-scheme: dark) {
       :root:not([data-theme="light"]) {
         --bg: #14171c; --panel: #1c2028; --text: #e3e6eb; --muted: #9aa3b1;
         --border: #2f3541; --accent: #8fb0d0; --error: #f2b8b5; --error-bg: #3a1d1c;
+        --notice-bg: #1f2a36;
       }
     }
     * { box-sizing: border-box; }
@@ -43,8 +45,21 @@
     #error { color: var(--error); background: var(--error-bg); padding: 8px 10px;
              border-radius: 5px; margin-bottom: 10px; white-space: pre-wrap;
              font: 12px ui-monospace, Menlo, monospace; }
+    #notice { background: var(--notice-bg); border: 1px solid var(--border); padding: 8px 10px;
+              border-radius: 5px; margin-bottom: 10px; word-break: break-all; }
     .label { color: var(--muted); font-size: 12px; margin: 0 0 6px; }
     .hidden { display: none; }
+    #sv-about-toggle { margin-left: auto; width: 30px; height: 30px; padding: 0; border-radius: 50%;
+                       font-weight: 600; color: var(--muted); }
+    #sv-about { position: fixed; inset: 56px 16px auto auto; margin: 0; width: min(340px, calc(100vw - 32px));
+                padding: 14px 16px; border: 1px solid var(--border); border-radius: 8px;
+                background: var(--panel); color: var(--text); box-shadow: 0 6px 24px rgba(0,0,0,.15);
+                font-size: 13px; }
+    #sv-about h2 { font-size: 15px; margin: 0 0 8px; }
+    #sv-about p { margin: 0 0 8px; }
+    #sv-about a { color: var(--accent); }
+    #sv-about code { font: 12px ui-monospace, Menlo, monospace; }
+    #sv-about .build { margin: 10px 0 0; color: var(--muted); font: 11px ui-monospace, Menlo, monospace; }
   </style>
 </head>
 <body>
@@ -53,11 +68,32 @@
     <select id="example" aria-label="Example"></select>
     <button id="run" class="primary">Run</button>
     <button id="reset">Reset</button>
+    <button id="copy-link" title="Copy a link that opens this code">Share</button>
     <span class="hint" id="status">Loading SCI and the statecharts library…</span>
+    <button id="sv-about-toggle" popovertarget="sv-about" aria-label="About this page" title="About this page">?</button>
   </header>
+  <div id="sv-about" popover>
+    <h2>statechart-viz</h2>
+    <p>Draws any <a href="https://github.com/fulcrologic/statecharts">Fulcro statechart</a> as a
+      Graphviz diagram, with the active states highlighted.</p>
+    <p>Edit the code, Run, and click events to step the chart. Share copies a link that opens your
+      chart.</p>
+    <p>Link to your own chart without opening the page first: add
+      <code>#src=</code> and the raw URL of a <code>.cljs</code> file, e.g. a gist.
+      <a href="https://github.com/sheluchin/statechart-viz#linking-to-a-chart">More ways</a>.</p>
+    <p>Your code runs in your browser with <a href="https://github.com/babashka/sci">SCI</a>
+      (<a href="https://github.com/babashka/scittle">Scittle</a>); nothing is sent to a server.</p>
+    <p class="links">
+      <a href="https://github.com/sheluchin/statechart-viz">GitHub</a> ·
+      <a href="https://fulcrologic.github.io/statecharts/">Statecharts docs</a> ·
+      <a href="https://www.w3.org/TR/scxml/">SCXML standard</a>
+    </p>
+    <p class="build" id="sv-build"></p>
+  </div>
   <main>
     <textarea id="code" spellcheck="false" aria-label="Chart code"></textarea>
     <section>
+      <div id="notice" class="hidden"></div>
       <div id="error" class="hidden"></div>
       <p class="label">Events (enabled when an active state handles them)</p>
       <div id="events"></div>
@@ -74,7 +110,11 @@
     (() => {
       const status = document.getElementById("status");
       const t0 = performance.now();
-      const { libs, app } = window.STATECHART_VIZ;
+      const { libs, app, build } = window.STATECHART_VIZ;
+      const commit = document.createElement("a");
+      commit.href = `https://github.com/sheluchin/statechart-viz/commit/${build.commit}`;
+      commit.textContent = build.commit + (build.dirty ? "+local" : "");
+      document.getElementById("sv-build").append(`statecharts ${build.statecharts} · built from `, commit);
       try {
         for (const [path, src] of libs) {
           try { scittle.core.eval_string(src); }

@@ -13,6 +13,9 @@ without writing its own renderer. Runs under babashka 1.13.223+, on the JVM, and
 events and watch the active states move. It runs in [Scittle](https://github.com/babashka/scittle),
 with no build step; the source is in [`site/`](site/).
 
+Share a chart with a link: the Share button makes one, or build your own (see
+[Linking to a chart](#linking-to-a-chart)).
+
 ![The traffic light chart from the statecharts docs, running: four parallel regions, the active state of each in gold](doc/traffic-lights.svg)
 
 *The traffic light from the [statecharts docs](https://fulcrologic.github.io/statecharts/), run
@@ -71,6 +74,52 @@ colours a state by its role. See [Annotating a chart](#annotating-a-chart).
 ```
 
 ![A checkout chart: a purple guarded edge "charged [amount matches] / send receipt", review in lilac, paid in green, failed in red](doc/checkout.svg)
+
+## Linking to a chart
+
+The [playground](https://sheluchin.github.io/statechart-viz/) opens whatever chart its URL names,
+so you can link to your own chart from docs, an issue or a chat without opening the page first.
+The chart is ClojureScript source whose last form evaluates to a chart, like the
+[examples](site/examples/). A linked chart runs as soon as the page opens.
+
+| Add to the URL | Opens |
+|---|---|
+| `#src=<url>` | The source at `<url>`, fetched by the browser. The server must allow cross-origin reads: raw gists and `raw.githubusercontent.com` do |
+| `#code=<encoded>` | The source in the link itself: raw DEFLATE, then base64url without padding. The Share button makes these |
+| `#example=<name>` | A built-in example: `traffic_lights`, `coin_flip`, `player` or `checkout` |
+
+A file in a repo or a gist is the simplest: link to its raw URL, and the link shows the latest
+version.
+
+```
+https://sheluchin.github.io/statechart-viz/#src=https://raw.githubusercontent.com/sheluchin/statechart-viz/main/site/examples/coin_flip.cljs
+```
+
+URL-encode `<url>` if it has a `#` or `&` in it.
+
+A `#code=` link needs nothing hosted and never changes. A 1.3 KB chart makes a link of about 600
+characters. To make one from a file, `chart.cljs`:
+
+```clojure
+;; babashka or Clojure
+(let [code (slurp "chart.cljs")
+      d    (doto (java.util.zip.Deflater. java.util.zip.Deflater/BEST_COMPRESSION true)
+             (.setInput (.getBytes code "UTF-8"))
+             (.finish))
+      buf  (byte-array (+ 64 (* 2 (count code))))
+      n    (.deflate d buf)]
+  (str "https://sheluchin.github.io/statechart-viz/#code="
+       (.encodeToString (.withoutPadding (java.util.Base64/getUrlEncoder))
+                        (java.util.Arrays/copyOf buf n))))
+```
+
+```sh
+# Node
+node -e 'console.log("https://sheluchin.github.io/statechart-viz/#code=" + require("zlib").deflateRawSync(require("fs").readFileSync(process.argv[1])).toString("base64url"))' chart.cljs
+
+# Python
+python3 -c 'import sys,zlib,base64; c=zlib.compressobj(9,zlib.DEFLATED,-15); print("https://sheluchin.github.io/statechart-viz/#code="+base64.urlsafe_b64encode(c.compress(open(sys.argv[1],"rb").read())+c.flush()).decode().rstrip("="))' chart.cljs
+```
 
 ## Install
 

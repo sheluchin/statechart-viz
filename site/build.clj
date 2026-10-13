@@ -9,7 +9,9 @@
   (:require
    [clojure.java.io :as io]
    [clojure.string :as str]
+   [babashka.process :as p]
    [cheshire.core :as json]
+   [clojure.edn :as edn]
    [edamame.core :as e]))
 
 (def roots
@@ -72,6 +74,16 @@
       (run! visit roots))
     @order))
 
+(defn- build-info
+  "What the page was built from, for its About popover."
+  []
+  (let [git    #(str/trim (:out (p/sh (into ["git"] %&))))
+        dirty? (seq (git "status" "--porcelain"))]
+    {:statecharts (get-in (edn/read-string (slurp "bb.edn"))
+                          [:deps 'com.fulcrologic/statecharts :mvn/version])
+     :commit      (git "rev-parse" "--short" "HEAD")
+     :dirty       (boolean dirty?)}))
+
 (defn -main [& _]
   (let [libs     (for [[_ path url] (load-order roots)] [path (patch path (slurp url))])
         examples (into (sorted-map)
@@ -79,7 +91,8 @@
                          [(str/replace (.getName f) #"\.cljs$" "") (slurp f)]))
         bundle   {:libs     (cons ["prelude.cljs" (slurp "site/shims/prelude.cljs")] libs)
                   :app      (slurp "site/app.cljs")
-                  :examples examples}
+                  :examples examples
+                  :build    (build-info)}
         ;; "<\/" keeps a "</script>" inside a source string from ending the inline tag
         js       (str "window.STATECHART_VIZ = "
                       (str/replace (json/generate-string bundle) "</" "<\\/") ";\n")
