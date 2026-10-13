@@ -49,6 +49,16 @@
               border-radius: 5px; margin-bottom: 10px; word-break: break-all; }
     .label { color: var(--muted); font-size: 12px; margin: 0 0 6px; }
     .hidden { display: none; }
+    #sv-about-toggle { margin-left: auto; width: 30px; height: 30px; padding: 0; border-radius: 50%;
+                       font-weight: 600; color: var(--muted); }
+    #sv-about { position: fixed; inset: 56px 16px auto auto; margin: 0; width: min(340px, calc(100vw - 32px));
+                padding: 14px 16px; border: 1px solid var(--border); border-radius: 8px;
+                background: var(--panel); color: var(--text); box-shadow: 0 6px 24px rgba(0,0,0,.15);
+                font-size: 13px; }
+    #sv-about h2 { font-size: 15px; margin: 0 0 8px; }
+    #sv-about p { margin: 0 0 8px; }
+    #sv-about a { color: var(--accent); }
+    #sv-about .build { margin: 10px 0 0; color: var(--muted); font: 11px ui-monospace, Menlo, monospace; }
   </style>
 </head>
 <body>
@@ -59,7 +69,22 @@
     <button id="reset">Reset</button>
     <button id="copy-link" title="Copy a link that opens this code">Share</button>
     <span class="hint" id="status">Loading SCI and the statecharts library…</span>
+    <button id="sv-about-toggle" popovertarget="sv-about" aria-label="About this page" title="About this page">?</button>
   </header>
+  <div id="sv-about" popover>
+    <h2>statechart-viz</h2>
+    <p>Draws any <a href="https://github.com/fulcrologic/statecharts">Fulcro statechart</a> as a
+      Graphviz diagram, with the active states highlighted.</p>
+    <p>Edit the code, Run, and click events to step the chart. Share copies a link that opens your
+      chart.</p>
+    <p>Your code runs in your browser with <a href="https://github.com/babashka/sci">SCI</a>
+      (<a href="https://github.com/babashka/scittle">Scittle</a>); nothing is sent to a server.</p>
+    <p class="links">
+      <a href="https://github.com/sheluchin/statechart-viz">GitHub</a> ·
+      <a href="https://fulcrologic.github.io/statecharts/">Statecharts docs</a>
+    </p>
+    <p class="build" id="sv-build"></p>
+  </div>
   <main>
     <textarea id="code" spellcheck="false" aria-label="Chart code"></textarea>
     <section>
@@ -80,7 +105,11 @@
     (() => {
       const status = document.getElementById("status");
       const t0 = performance.now();
-      const { libs, app } = window.STATECHART_VIZ;
+      const { libs, app, build } = window.STATECHART_VIZ;
+      const commit = document.createElement("a");
+      commit.href = `https://github.com/sheluchin/statechart-viz/commit/${build.commit}`;
+      commit.textContent = build.commit + (build.dirty ? "+local" : "");
+      document.getElementById("sv-build").append(`statecharts ${build.statecharts} · built from `, commit);
       try {
         for (const [path, src] of libs) {
           try { scittle.core.eval_string(src); }
