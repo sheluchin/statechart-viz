@@ -7,8 +7,7 @@
     #example=coin_flip   a built-in example, run at once
     #code=<compressed>   a chart from a Share link
     #src=<url>           a chart fetched from a URL (a raw gist or repo file)
-  Code from a link is loaded but not run until the viewer clicks Run, since
-  it runs with full access to the page."
+  Code from a link runs as soon as the page opens, with full access to it."
   (:require
    [clojure.string :as str]
    [com.fulcrologic.statecharts :as sc]
@@ -160,8 +159,8 @@
   (clear-output!)
   (set! (.-value (el "example")) "")
   (set! (.-value (el "code")) code)
-  (show-notice! (str "Chart loaded from " source ". Read the code, then click Run: "
-                     "it runs in your browser with full access to this page.")))
+  (start!)
+  (show-notice! (str "Chart loaded from " source ".")))
 
 (defn- hash-params []
   (let [h (subs js/location.hash 1)]

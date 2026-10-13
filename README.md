@@ -21,7 +21,7 @@ Link to your own chart in it:
 | `#src=<url>` | A chart fetched from a URL, such as a raw gist: `…/statechart-viz/#src=https://gist.githubusercontent.com/…/chart.cljs` |
 | `#example=coin_flip` | A built-in example |
 
-A chart from a link is loaded but not run until you click Run.
+A chart from a link runs as soon as the page opens.
 
 ![The traffic light chart from the statecharts docs, running: four parallel regions, the active state of each in gold](doc/traffic-lights.svg)
 
