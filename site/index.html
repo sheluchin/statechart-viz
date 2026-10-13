@@ -8,11 +8,13 @@
     :root {
       --bg: #f7f8fa; --panel: #ffffff; --text: #1c2230; --muted: #6b7484;
       --border: #d5dae1; --accent: #5a7a99; --error: #b3261e; --error-bg: #fdecea;
+      --notice-bg: #eef3f8;
     }
     @media (prefers-color-scheme: dark) {
       :root:not([data-theme="light"]) {
         --bg: #14171c; --panel: #1c2028; --text: #e3e6eb; --muted: #9aa3b1;
         --border: #2f3541; --accent: #8fb0d0; --error: #f2b8b5; --error-bg: #3a1d1c;
+        --notice-bg: #1f2a36;
       }
     }
     * { box-sizing: border-box; }
@@ -43,6 +45,8 @@
     #error { color: var(--error); background: var(--error-bg); padding: 8px 10px;
              border-radius: 5px; margin-bottom: 10px; white-space: pre-wrap;
              font: 12px ui-monospace, Menlo, monospace; }
+    #notice { background: var(--notice-bg); border: 1px solid var(--border); padding: 8px 10px;
+              border-radius: 5px; margin-bottom: 10px; word-break: break-all; }
     .label { color: var(--muted); font-size: 12px; margin: 0 0 6px; }
     .hidden { display: none; }
   </style>
@@ -53,11 +57,13 @@
     <select id="example" aria-label="Example"></select>
     <button id="run" class="primary">Run</button>
     <button id="reset">Reset</button>
+    <button id="share" title="Copy a link that opens this code">Share</button>
     <span class="hint" id="status">Loading SCI and the statecharts library…</span>
   </header>
   <main>
     <textarea id="code" spellcheck="false" aria-label="Chart code"></textarea>
     <section>
+      <div id="notice" class="hidden"></div>
       <div id="error" class="hidden"></div>
       <p class="label">Events (enabled when an active state handles them)</p>
       <div id="events"></div>

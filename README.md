@@ -13,6 +13,16 @@ without writing its own renderer. Runs under babashka 1.13.223+, on the JVM, and
 events and watch the active states move. It runs in [Scittle](https://github.com/babashka/scittle),
 with no build step; the source is in [`site/`](site/).
 
+Link to your own chart in it:
+
+| Link | Opens |
+|---|---|
+| Share button | The editor's code, compressed into the link: `…/statechart-viz/#code=fYy…` |
+| `#src=<url>` | A chart fetched from a URL, such as a raw gist: `…/statechart-viz/#src=https://gist.githubusercontent.com/…/chart.cljs` |
+| `#example=coin_flip` | A built-in example |
+
+A chart from a link is loaded but not run until you click Run.
+
 ![The traffic light chart from the statecharts docs, running: four parallel regions, the active state of each in gold](doc/traffic-lights.svg)
 
 *The traffic light from the [statecharts docs](https://fulcrologic.github.io/statecharts/), run
