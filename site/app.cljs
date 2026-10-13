@@ -201,7 +201,7 @@
     (.addEventListener picker "change" #(load-example! (.-value picker)))
     (.addEventListener (el "run") "click" start!)
     (.addEventListener (el "reset") "click" start!)
-    (.addEventListener (el "share") "click" share!)
+    (.addEventListener (el "copy-link") "click" share!)
     (.addEventListener js/window "hashchange" load-from-hash!)
     (.addEventListener (el "code") "keydown"
                        #(when (and (= "Enter" (.-key %)) (or (.-metaKey %) (.-ctrlKey %)))
