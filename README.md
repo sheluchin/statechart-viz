@@ -165,6 +165,7 @@ Options for `dot` and `render`:
 | `:active` | Set of active state ids, i.e. a session's configuration |
 | `:focus` | Draw only this state's subtree. Transitions leaving it end at a grey `↗ name` stub, and the title becomes a breadcrumb |
 | `:depth` | Expand this many container levels below the focus; deeper ones become one `⊞ n states` box |
+| `:max-loops` | The most targetless transitions a state draws as self-loops, default 2. Past it, they are listed in its box: a state that handles many events without leaving, like an inbox, stays readable |
 | `:title` | Title above the diagram |
 | `:theme` | Partial map overriding `statechart-viz.theme/default` |
 
@@ -180,7 +181,7 @@ Options for `dot` and `render`:
 | Initial | Dot inside its region, one arrow to the first state |
 | Guarded transition | Purple, marked `[guard]` or `[`*`:diagram/condition`*`]` |
 | Fallback transition | Marked `[else]`: unguarded, after a guarded transition on the same events from the same state |
-| Targetless (internal) transition | Dotted self-loop, or `↺ event` in the label of a container |
+| Targetless (internal) transition | Dotted self-loop. Listed as `↺ event` lines instead in the box of a container, or of a state with more than `:max-loops` (default 2) of them |
 | Transition between a container and its own child | Starts or ends at a small circle at the container's top |
 | Active state | Gold fill, or a gold border on a container |
 

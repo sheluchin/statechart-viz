@@ -90,6 +90,28 @@
                                  (script {:expr (fn [_ _] nil) :diagram/label "chime"})))
               (state {:id :door/open})))
 
+(def inbox
+  "A state that handles many events without leaving, as an agent's inbox
+  does, next to one with a single internal transition: each event a
+  targetless transition, guarded, labelled or with actions."
+  (statechart {}
+              (parallel {:id :agent}
+                        (state {:id :agent/intake}
+                               (transition {:event :message :cond yes? :type :internal :diagram/condition "not a command"}
+                                           (script {:expr (fn [_ _] nil) :diagram/label "keep it"}))
+                               (transition {:event :note :type :internal :diagram/label "/note: a note"})
+                               (transition {:event :approve :cond yes? :type :internal :diagram/condition "while asked"})
+                               (transition {:event :say :type :internal}
+                                           (script {:expr (fn [_ _] nil) :diagram/label "to their DMs"}))
+                               (transition {:event :ci :type :internal})
+                               (transition {:event :check-back :type :internal}))
+                        (state {:id :agent/timer :initial :timer/off}
+                               (state {:id :timer/off}
+                                      (transition {:event :set :target :timer/on}))
+                               (state {:id :timer/on}
+                                      (transition {:event :tick :type :internal})
+                                      (transition {:event :fire :target :timer/off}))))))
+
 (def all
   {:flat flat :nested nested :parallel parallel-chart :invoke with-invoke :child child
-   :unnamed unnamed :annotated annotated})
+   :unnamed unnamed :annotated annotated :inbox inbox})

@@ -105,6 +105,20 @@
     (is (str/includes? dot "label=\"work\\n↺ tick\""))
     (is (not (re-find #"-> .*label=\" tick \"" dot)))))
 
+(deftest a-crowded-state-lists-its-internal-transitions
+  (let [dot (viz/dot f/inbox)]
+    (testing "past two, they are listed in the box, left-aligned, instead of drawn as loops"
+      (is (str/includes? dot (str "label=\"intake\\n↺ message [not a command] / keep it\\l↺ /note: a note\\l"
+                                  "↺ approve [while asked]\\l↺ say / to their DMs\\l↺ ci\\l↺ check-back\\l\"")))
+      (is (not (re-find #"-> .*label=\" (ci|say|check-back)" dot))))
+    (testing "a state with one keeps its self-loop"
+      (is (re-find #"-> .*label=\" tick \"" dot))
+      (is (line-for dot "on"))))
+  (testing ":max-loops raises the limit"
+    (let [dot (viz/dot f/inbox {:max-loops 6})]
+      (is (line-for dot "intake"))
+      (is (re-find #"-> .*label=\" check-back \"" dot)))))
+
 (deftest zoom-by-focus
   (let [dot (viz/dot f/nested {:focus :app/running})]
     (testing "only the focused subtree is drawn"
