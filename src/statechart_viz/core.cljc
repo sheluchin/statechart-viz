@@ -6,6 +6,7 @@
     (outline chart)       the state tree as data, for zoom / nav menus
     (zoom-targets chart)  every state worth zooming into, with its path
     (render chart opts)   DOT rendered by Graphviz to :svg or :png bytes
+    (explorer chart opts) the chart and the charts it invokes as clickable HTML
 
   For a running session, pass the statecharts env and its session id
   instead of the chart and its configuration:
@@ -16,6 +17,7 @@
   (:require
    [statechart-viz.dot :as d]
    [statechart-viz.model :as m]
+   #?(:clj [statechart-viz.explorer :as ex])
    #?(:clj [statechart-viz.render :as r])
    [statechart-viz.session :as s]))
 
@@ -69,6 +71,24 @@
      ([chart] (render chart {}))
      ([chart opts]
       (r/render-dot (d/dot chart opts) opts))))
+
+#?(:clj
+   (defn explorer
+     "The chart and the charts it invokes as an HTML fragment to put in a page:
+     click a container to zoom in, a state that invokes a chart to open it, a
+     stub to step out; a breadcrumb or Escape goes back. Every view is
+     rendered now, with Graphviz, so the page needs neither. Options: those
+     of `dot` less :active and :focus, plus :charts {src chart}, the invoked
+     charts by their invoke's :src, and :dark, a second theme for dark pages.
+     See statechart-viz.explorer."
+     [chart opts]
+     (ex/fragment chart opts)))
+
+#?(:clj
+   (defn explorer-page
+     "`explorer` as a whole HTML page."
+     [chart opts]
+     (ex/page chart opts)))
 
 (defn session-tree
   "The session `session-id` in `env` and the charts it invoked, recursively:

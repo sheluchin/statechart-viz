@@ -60,6 +60,22 @@ is its own session, so you draw it with its own call, and a `:title` says where 
 |---|---|
 | ![A game whose Playing state invokes a coin chart](doc/invoke.svg) | ![The coin chart, landed on tails, titled game › Playing › coin](doc/invoke-child.svg) |
 
+### Click through it
+
+`explorer` draws a chart and the charts it invokes as one HTML page you click through. Click a
+container to zoom into it, click a state that invokes a chart to open that chart, and click a
+`↗ stub` to step out to the state holding both ends. The breadcrumb, or Escape, goes back.
+Every view is rendered ahead of time, so the page needs no Graphviz and no runtime, and works
+as a file, a GitHub Pages page or part of another page.
+
+```clojure
+(spit "game.html" (viz/explorer-page game {:charts {`coin coin}}))   ; a whole page
+(viz/explorer game {:charts {`coin coin} :dark {:background "#161d27" :text "#e5e9ef"}})
+;; => an HTML fragment for a page of your own; :dark is shown when that page is dark
+```
+
+`:charts` maps an invoke's `:src` to its chart. A chart missing from it is drawn but not opened.
+
 ### Annotations
 
 Guards are functions, so on their own an edge only says `[guard]`. `:diagram/condition` says what
@@ -156,6 +172,8 @@ this repo gives a shell with a pinned Graphviz 15.1.1 (see [Develop](#develop)).
 | `(zoom-targets chart)` | Every container you can zoom into, outermost first, with its `:path` of labels and its `:svg-id`. For a nav menu |
 | `(session-dot env session-id opts)` | DOT for a running session: its chart from the env's registry, its active states from the working-memory store. Nil if the store has no such session |
 | `(render-session env session-id opts)` | `render` for a running session; `{:error "No session …"}` if there is none |
+| `(explorer chart opts)` | The chart and the charts it invokes (`:charts {src chart}`) as a clickable HTML fragment; `:dark` adds a theme for dark pages |
+| `(explorer-page chart opts)` | `explorer` as a whole HTML page |
 | `(session-tree env session-id)` | The session and the charts it invoked, recursively: `{:session-id :src :active :parent :children}` |
 
 Options for `dot` and `render`:
