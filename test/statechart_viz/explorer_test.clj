@@ -61,5 +61,7 @@
         (is (= 2 (count (re-seq #"\"dark\":\"\\u003csvg" data)))))
       (testing "the data can't close its <script> early"
         (is (not (str/includes? data "<"))))
+      (testing "zoom controls, and a wheel listener that can stop the page's scroll"
+        (is (every? #(str/includes? html %) ["class=\"sv-out\"" "class=\"sv-in\"" "class=\"sv-fit\"" "'wheel'" "{passive:false}"])))
       (testing "a whole page around it"
         (is (str/starts-with? (ex/page f/with-invoke {:charts charts}) "<!doctype html>"))))))

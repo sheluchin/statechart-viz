@@ -2,7 +2,9 @@
   "A chart and the charts it invokes as one clickable page: click a container
   to zoom into it, click a state that invokes a chart to open that chart, and
   click a `↗ stub` to step out to the state that holds both ends. A
-  breadcrumb, or Escape, goes back.
+  breadcrumb, or Escape, goes back. The wheel zooms at the pointer (at the
+  fitted size, scrolling down scrolls the page instead), a drag pans, and
+  − + Fit, or the keys - + 0, do the same from the keyboard or a phone.
 
   Every view is rendered here, ahead of time, so the page needs no Graphviz
   and no runtime: its script only swaps SVGs and reads the ids `dot` gives
@@ -155,31 +157,57 @@
 (def ^:private style
   ".sv-explorer{display:grid;gap:8px;min-width:0}
 .sv-explorer .sv-bar{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;justify-content:space-between;font:13px ui-monospace,Menlo,monospace}
-.sv-explorer .sv-crumbs{display:flex;flex-wrap:wrap;gap:4px;align-items:center;min-width:0}
-.sv-explorer .sv-crumbs button,.sv-explorer .sv-size{font:inherit;color:inherit;background:none;border:1px solid transparent;border-radius:6px;padding:2px 6px;cursor:pointer}
-.sv-explorer .sv-crumbs button:hover,.sv-explorer .sv-size:hover{border-color:currentColor}
+.sv-explorer .sv-crumbs,.sv-explorer .sv-zoom{display:flex;flex-wrap:wrap;gap:4px;align-items:center;min-width:0}
+.sv-explorer button{font:inherit;color:inherit;background:none;border:1px solid transparent;border-radius:6px;padding:2px 6px;cursor:pointer}
+.sv-explorer button:hover:not(:disabled){border-color:currentColor}
+.sv-explorer button:disabled{opacity:.4;cursor:default}
+.sv-explorer button:focus-visible{outline:2px solid currentColor;outline-offset:1px}
 .sv-explorer .sv-crumbs button[aria-current]{font-weight:600;cursor:default;border-color:transparent}
-.sv-explorer .sv-crumbs .sep{opacity:.5}
-.sv-explorer .sv-stage{overflow:auto}
-.sv-explorer .sv-stage svg{display:block;height:auto;margin:0 auto}
-.sv-explorer .sv-stage.fit svg{width:100%}
+.sv-explorer .sv-crumbs .sep,.sv-explorer .sv-hint{opacity:.6}
+.sv-explorer .sv-hint{font-size:12px;margin-right:6px}
+.sv-explorer .sv-level{min-width:4.5ch;text-align:center;font-variant-numeric:tabular-nums}
+.sv-explorer .sv-stage{overflow:hidden;position:relative}
+.sv-explorer .sv-stage.zoomed{cursor:grab}
+.sv-explorer .sv-stage.dragging{cursor:grabbing}
+.sv-explorer .sv-canvas{transform-origin:0 0}
+.sv-explorer .sv-canvas svg{display:block;width:100%;height:auto;margin:0 auto}
 .sv-explorer .sv-go{cursor:pointer}
+.sv-explorer .sv-stage.dragging .sv-go{cursor:grabbing}
 .sv-explorer .sv-go:hover>path,.sv-explorer .sv-go:hover>polygon,.sv-explorer .sv-go:focus>path,.sv-explorer .sv-go:focus>polygon{stroke-width:3.5}
 .sv-explorer .sv-go:hover>text,.sv-explorer .sv-go:focus>text{text-decoration:underline}
-.sv-explorer .sv-go:focus{outline:none}
-.sv-explorer .sv-hint{opacity:.7;font-size:12px}")
+.sv-explorer .sv-go:focus{outline:none}")
 
 (def ^:private script
   "(function(root){
 var data=JSON.parse(root.querySelector('script[type=\"application/json\"]').textContent);
-var stage=root.querySelector('.sv-stage'),crumbs=root.querySelector('.sv-crumbs'),size=root.querySelector('.sv-size');
-var stack=[data.start];
+var stage=root.querySelector('.sv-stage'),crumbs=root.querySelector('.sv-crumbs'),level=root.querySelector('.sv-level');
+var stack=[data.start],canvas=null,z={s:1,x:0,y:0},MAX=8,drag=null,dragged=false;
 function dark(){var t=document.documentElement.getAttribute('data-theme');if(t)return t==='dark';return window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches;}
+function mine(){return (window.svExplorerLast||root)===root;}
 function go(k){var i=stack.indexOf(k);if(i>=0)stack=stack.slice(0,i+1);else stack.push(k);show();}
-function show(){
+// zoom: a scale and offset on the drawing. Zoomed, the view grows with it, to
+// three quarters of the window, so a wide chart isn't seen through a slit
+function apply(){
+  if(canvas)canvas.style.transform=z.s===1?'':'translate('+z.x+'px,'+z.y+'px) scale('+z.s+')';
+  level.textContent=Math.round(z.s*100)+'%';
+  root.querySelector('.sv-out').disabled=root.querySelector('.sv-fit').disabled=z.s===1;
+  root.querySelector('.sv-in').disabled=z.s>=MAX;
+  stage.classList.toggle('zoomed',z.s>1);}
+function clamp(){
+  if(!canvas)return;
+  var cw=canvas.offsetWidth,ch=canvas.offsetHeight;
+  stage.style.height=z.s===1?'':Math.max(ch,Math.min(ch*z.s,window.innerHeight*0.75))+'px';
+  z.x=Math.min(0,Math.max(stage.clientWidth-cw*z.s,z.x));z.y=Math.min(0,Math.max(stage.clientHeight-ch*z.s,z.y));}
+function zoomAt(f,px,py){
+  var s=Math.min(MAX,Math.max(1,z.s*f));if(s===z.s)return;
+  z.x=px-(px-z.x)*s/z.s;z.y=py-(py-z.y)*s/z.s;z.s=s;clamp();apply();}
+function zoomMid(f){zoomAt(f,stage.clientWidth/2,stage.clientHeight/2);}
+function fit(){z={s:1,x:0,y:0};clamp();apply();}
+function show(keep){
   var v=data.views[stack[stack.length-1]];
-  stage.innerHTML=(dark()&&v.svg.dark)||v.svg.light;
-  var svg=stage.querySelector('svg');
+  stage.innerHTML='<div class=\"sv-canvas\">'+((dark()&&v.svg.dark)||v.svg.light)+'</div>';
+  canvas=stage.firstChild;
+  var svg=canvas.querySelector('svg');
   if(svg){svg.style.maxWidth=svg.getAttribute('width');svg.removeAttribute('width');svg.removeAttribute('height');}
   Object.keys(v.go).forEach(function(id){
     var el=document.getElementById(id);if(!el||!stage.contains(el))return;
@@ -191,16 +219,41 @@ function show(){
     var b=document.createElement('button');b.type='button';b.textContent=data.views[k].label;
     if(i===stack.length-1)b.setAttribute('aria-current','page');else b.addEventListener('click',function(){go(k);});
     crumbs.appendChild(b);});
+  if(keep)apply();else fit();
 }
-stage.addEventListener('click',function(e){var el=e.target.closest&&e.target.closest('[data-go]');if(el)go(el.getAttribute('data-go'));});
+stage.addEventListener('click',function(e){
+  if(dragged){dragged=false;return;}
+  var el=e.target.closest&&e.target.closest('[data-go]');if(el)go(el.getAttribute('data-go'));});
 stage.addEventListener('keydown',function(e){var el=e.target.closest&&e.target.closest('[data-go]');if(el&&(e.key==='Enter'||e.key===' ')){e.preventDefault();go(el.getAttribute('data-go'));}});
-// Escape goes to the explorer used last: a click replaces the SVG, so focus can't say which
+// the wheel zooms at the pointer; at the fitted size, scrolling down scrolls the page instead
+stage.addEventListener('wheel',function(e){
+  var dy=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?400:1);
+  if(dy>=0&&z.s<=1&&!e.ctrlKey)return;
+  e.preventDefault();var r=stage.getBoundingClientRect();
+  zoomAt(Math.exp(-dy*0.002),e.clientX-r.left,e.clientY-r.top);},{passive:false});
+// a drag pans a zoomed drawing; the click that ends it opens nothing
+stage.addEventListener('pointerdown',function(e){dragged=false;if(z.s>1&&e.button===0)drag={x:e.clientX,y:e.clientY,zx:z.x,zy:z.y,id:e.pointerId,on:false};});
+stage.addEventListener('pointermove',function(e){
+  if(!drag)return;var dx=e.clientX-drag.x,dy=e.clientY-drag.y;
+  if(!drag.on){if(Math.abs(dx)+Math.abs(dy)<5)return;drag.on=dragged=true;stage.setPointerCapture(drag.id);stage.classList.add('dragging');}
+  z.x=drag.zx+dx;z.y=drag.zy+dy;clamp();apply();});
+function end(){drag=null;stage.classList.remove('dragging');}
+stage.addEventListener('pointerup',end);stage.addEventListener('pointercancel',end);
+root.querySelector('.sv-in').addEventListener('click',function(){zoomMid(1.5);});
+root.querySelector('.sv-out').addEventListener('click',function(){zoomMid(1/1.5);});
+root.querySelector('.sv-fit').addEventListener('click',fit);
+// keys go to the explorer used last: a click replaces the SVG, so focus can't say which
 root.addEventListener('pointerdown',function(){window.svExplorerLast=root;});
 root.addEventListener('focusin',function(){window.svExplorerLast=root;});
-document.addEventListener('keydown',function(e){if(e.key==='Escape'&&stack.length>1&&(window.svExplorerLast||root)===root){stack.pop();show();}});
-size.addEventListener('click',function(){var fit=stage.classList.toggle('fit');size.textContent=fit?'Actual size':'Fit';});
-if(window.matchMedia)matchMedia('(prefers-color-scheme: dark)').addEventListener('change',show);
-new MutationObserver(show).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+document.addEventListener('keydown',function(e){
+  if(!mine()||e.ctrlKey||e.metaKey||e.altKey||/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName))return;
+  if(e.key==='Escape'&&stack.length>1){stack.pop();show();}
+  else if(e.key==='+'||e.key==='=')zoomMid(1.5);
+  else if(e.key==='-')zoomMid(1/1.5);
+  else if(e.key==='0')fit();});
+window.addEventListener('resize',function(){clamp();apply();});
+if(window.matchMedia)matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(){show(true);});
+new MutationObserver(function(){show(true);}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 show();
 })(document.currentScript.parentNode);")
 
@@ -211,9 +264,11 @@ show();
   (str "<div class=\"sv-explorer\">\n"
        "<style>" style "</style>\n"
        "<div class=\"sv-bar\"><nav class=\"sv-crumbs\" aria-label=\"Where you are\"></nav>"
-       "<span><span class=\"sv-hint\">click a box to open it · Esc goes back</span> "
-       "<button type=\"button\" class=\"sv-size\">Actual size</button></span></div>\n"
-       "<div class=\"sv-stage fit\"></div>\n"
+       "<div class=\"sv-zoom\"><span class=\"sv-hint\">click a box to open it · scroll to zoom · drag to pan · Esc goes back</span>"
+       "<button type=\"button\" class=\"sv-out\" aria-label=\"Zoom out\">−</button><span class=\"sv-level\">100%</span>"
+       "<button type=\"button\" class=\"sv-in\" aria-label=\"Zoom in\">+</button>"
+       "<button type=\"button\" class=\"sv-fit\">Fit</button></div></div>\n"
+       "<div class=\"sv-stage\"></div>\n"
        "<script type=\"application/json\">" (json (data chart opts)) "</script>\n"
        "<script>" script "</script>\n"
        "</div>\n"))
