@@ -5,6 +5,7 @@
     (dot chart opts)      Graphviz DOT, see statechart-viz.dot/dot for opts
     (outline chart)       the state tree as data, for zoom / nav menus
     (zoom-targets chart)  every state worth zooming into, with its path
+    (moves chart focus)   where a viewer can go from a view: in, open, out
     (render chart opts)   DOT rendered by Graphviz to :svg or :png bytes
     (explorer chart opts) the chart and the charts it invokes as clickable HTML
 
@@ -17,6 +18,7 @@
   (:require
    [statechart-viz.dot :as d]
    [statechart-viz.model :as m]
+   [statechart-viz.nav :as nav]
    #?(:clj [statechart-viz.explorer :as ex])
    #?(:clj [statechart-viz.render :as r])
    [statechart-viz.session :as s]))
@@ -62,6 +64,15 @@
                                reverse
                                (mapv #(:label (get idx %))))
                   :states (count (:children n))})))))
+
+(defn moves
+  "Where a viewer can go from the view of `chart` focused on `focus` (nil for
+  the whole chart): `{:in :open :out :stubs}`, the containers to zoom into,
+  the charts its states invoke, one container up, and the states its `↗`
+  stubs stand for. One model for every kind of viewer: the explorer makes
+  them clicks, a chat bot buttons under an image. See statechart-viz.nav."
+  [chart focus]
+  (nav/moves chart focus))
 
 #?(:clj
    (defn render

@@ -172,6 +172,7 @@ this repo gives a shell with a pinned Graphviz 15.1.1 (see [Develop](#develop)).
 | `(zoom-targets chart)` | Every container you can zoom into, outermost first, with its `:path` of labels and its `:svg-id`. For a nav menu |
 | `(session-dot env session-id opts)` | DOT for a running session: its chart from the env's registry, its active states from the working-memory store. Nil if the store has no such session |
 | `(render-session env session-id opts)` | `render` for a running session; `{:error "No session …"}` if there is none |
+| `(moves chart focus)` | Where a viewer can go from a view: `{:in :open :out :stubs}`, the containers to zoom into, the charts its states invoke, one container up, and what its `↗` stubs lead to. The explorer makes them clicks; a chat bot can make them buttons under an image |
 | `(explorer chart opts)` | The chart and the charts it invokes (`:charts {src chart}`) as a clickable HTML fragment; `:dark` adds a theme for dark pages |
 | `(explorer-page chart opts)` | `explorer` as a whole HTML page |
 | `(session-tree env session-id)` | The session and the charts it invoked, recursively: `{:session-id :src :active :parent :children}` |

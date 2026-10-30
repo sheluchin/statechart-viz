@@ -28,6 +28,7 @@
    [clojure.string :as str]
    [statechart-viz.dot :as d]
    [statechart-viz.model :as m]
+   [statechart-viz.nav :as nav]
    [statechart-viz.render :as r]
    [statechart-viz.theme :as theme]))
 
@@ -53,45 +54,27 @@
           (recur (concat (rest todo) found) (assoc seen src k) (conj out [k chart nm src]))))
       {:charts out :key-of seen})))
 
-(defn- sole-top?
-  "The chart's only top-level state: zoomed into, it draws as the whole chart does."
-  [idx id]
-  (and (= :ROOT (:parent (get idx id))) (= 1 (count (:children (get idx :ROOT))))))
-
-(defn- view-key [chart-key focus idx]
-  (if (or (= :ROOT focus) (sole-top? idx focus)) chart-key (str chart-key "." (:key (get idx focus)))))
-
-(defn- containing
-  "The innermost container holding both `focus` and `id`, or :ROOT."
-  [idx focus id]
-  (let [around (set (cons focus (m/ancestors-of idx focus)))]
-    (or (first (filter around (m/ancestors-of idx id))) :ROOT)))
+(defn- view-key [chart-key chart focus idx]
+  (let [f (nav/view-focus chart focus)]
+    (if (= :ROOT f) chart-key (str chart-key "." (:key (get idx f))))))
 
 (defn- goes
   "svg id -> {:view :hint} for the view of `chart` focused on `focus`: its
-  containers zoom in, its invoking states open their chart, its stubs step
-  out. Only ids the view's DOT draws are kept."
-  [{:keys [idx chart-key key-of]} focus dot-text]
-  (let [inside? #(or (= :ROOT focus) (m/descendant? idx % focus))
-        drawn?  #(str/includes? dot-text (str "id=\"" % "\""))
-        vk      #(view-key chart-key % idx)]
+  moves (`statechart-viz.nav/moves`) as clicks. Only ids the view's DOT draws,
+  and charts the explorer has, are kept."
+  [{:keys [idx chart chart-key key-of]} focus dot-text]
+  (let [{:keys [in open stubs]} (nav/moves chart focus)
+        drawn? #(str/includes? dot-text (str "id=\"" % "\""))
+        vk     #(view-key chart-key chart % idx)]
     (into {}
-          (filter (fn [[id {:keys [view]}]] (and (drawn? id) (not= view (vk focus)))))
+          (filter (fn [[id _]] (drawn? id)))
           (concat
-           (for [node (vals idx)
-                 :when (and (not= :root (:kind node)) (inside? (:id node)))
-                 :let [opens (some #(when-let [k (get key-of (:src %))] [k %]) (:invokes node))]
-                 e (cond-> []
-                     (m/compound? node) (conj [(d/svg-id node) {:view (vk (:id node)) :hint (str "Zoom into " (:label node))}])
-                     (and opens (m/compound? node))
-                     (conj [(str "invoke:" (:src (second opens))) {:view (first opens) :hint (str "Open " (:label (second opens)))}])
-                     (and opens (not (m/compound? node)))
-                     (conj [(d/svg-id node) {:view (first opens) :hint (str "Open " (:label (second opens)))}]))]
-             e)
-           (for [node (vals idx)
-                 :when (and (not= :root (:kind node)) (not (inside? (:id node))) (not= focus (:id node)))
-                 :let [to (containing idx focus (:id node))]]
-             [(str "stub:" (:key node)) {:view (vk to) :hint (str "Out to " (if (= :ROOT to) "the whole chart" (:label (get idx to))))}])))))
+           (for [{:keys [id label svg-id]} in] [svg-id {:view (vk id) :hint (str "Zoom into " label)}])
+           ;; a state invoking several charts opens the first the explorer has
+           (reverse (for [{:keys [src label svg-id]} open :when (contains? key-of src)]
+                      [svg-id {:view (get key-of src) :hint (str "Open " label)}]))
+           (for [{:keys [to svg-id]} stubs]
+             [svg-id {:view (vk to) :hint (str "Out to " (if (= :ROOT to) "the whole chart" (:label (get idx to))))}])))))
 
 (defn plan
   "The explorer's views, before rendering: `{:start view-key :views {view-key
@@ -104,13 +87,12 @@
      :views (into {}
                   (for [[ck c nm] charts
                         :let [idx (m/index (m/tree c))
-                              ctx {:idx idx :chart-key ck :key-of key-of}]
-                        focus (cons :ROOT (->> (vals idx) (filter #(and (not= :root (:kind %)) (m/compound? %) (not (sole-top? idx (:id %)))))
-                                               (sort-by (juxt :depth :key)) (map :id)))
+                              ctx {:idx idx :chart c :chart-key ck :key-of key-of}]
+                        focus (cons :ROOT (map :id (:in (nav/moves c :ROOT))))
                         ;; the page's breadcrumb names a zoomed view; only a chart's own view is titled
                         :let [title    (when (= :ROOT focus) nm)
                               dot-text (d/dot c (assoc dot-opts :focus focus :title title))]]
-                    [(view-key ck focus idx)
+                    [(view-key ck c focus idx)
                      {:chart c :focus focus :title title :dot dot-text :go (goes ctx focus dot-text)
                       :label (if (= :ROOT focus) (if (= "c0" ck) nm (str "⤵ " nm)) (:label (get idx focus)))}]))}))
 
