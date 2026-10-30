@@ -10,8 +10,9 @@ without writing its own renderer. Runs under babashka 1.13.223+, on the JVM, and
 [SCI](https://github.com/babashka/sci).
 
 **[Try it in your browser](https://sheluchin.github.io/statechart-viz/):** paste a chart, click its
-events and watch the active states move. It runs in [Scittle](https://github.com/babashka/scittle),
-with no build step; the source is in [`site/`](site/).
+events and watch the active states move. Click a box in the drawing to zoom into it and a `↗` stub
+to step back out; scroll over it to magnify, drag to pan. It runs in
+[Scittle](https://github.com/babashka/scittle), with no build step; the source is in [`site/`](site/).
 
 Share a chart with a link: the Share button makes one, or build your own (see
 [Linking to a chart](#linking-to-a-chart)).
@@ -75,6 +76,14 @@ as a file, a GitHub Pages page or part of another page.
 ```
 
 `:charts` maps an invoke's `:src` to its chart. A chart missing from it is drawn but not opened.
+
+The [playground](https://sheluchin.github.io/statechart-viz/) clicks through a chart the same
+way, drawing each view as you go, while the chart runs. It doesn't open invoked charts: it runs
+one chart.
+
+To make clicks or buttons of your own, `moves` gives the same data the explorer uses: the
+containers inside a view, the charts its states invoke, one level up, and where each `↗` stub
+leads.
 
 ### Annotations
 
@@ -259,7 +268,10 @@ nix develop  # optional: a shell with the pinned Graphviz, babashka and a JDK fr
 bb test      # needs Graphviz `dot` for the render tests; they are skipped without it
 bb gallery   # renders every test chart to out/*.png
 bb readme-images   # redraws the pictures in this README, doc/*.dot and doc/*.svg
+bb site      # bundles the playground into site/vendor/; open site/index.html
 ```
+
+Pushes to main publish the playground to GitHub Pages (`.github/workflows/pages.yml`).
 
 The SVGs in `doc/` were drawn by `bb readme-images` inside `nix develop`, with Graphviz 15.1.1.
 `nix flake update` moves the pin.
