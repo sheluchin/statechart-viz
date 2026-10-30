@@ -60,6 +60,22 @@ is its own session, so you draw it with its own call, and a `:title` says where 
 |---|---|
 | ![A game whose Playing state invokes a coin chart](doc/invoke.svg) | ![The coin chart, landed on tails, titled game › Playing › coin](doc/invoke-child.svg) |
 
+### Click through it
+
+`explorer` draws a chart and the charts it invokes as one HTML page you click through. Click a
+container to zoom into it, click a state that invokes a chart to open that chart, and click a
+`↗ stub` to step out to the state holding both ends. The breadcrumb, or Escape, goes back.
+Every view is rendered ahead of time, so the page needs no Graphviz and no runtime, and works
+as a file, a GitHub Pages page or part of another page.
+
+```clojure
+(spit "game.html" (viz/explorer-page game {:charts {`coin coin}}))   ; a whole page
+(viz/explorer game {:charts {`coin coin} :dark {:background "#161d27" :text "#e5e9ef"}})
+;; => an HTML fragment for a page of your own; :dark is shown when that page is dark
+```
+
+`:charts` maps an invoke's `:src` to its chart. A chart missing from it is drawn but not opened.
+
 ### Annotations
 
 Guards are functions, so on their own an edge only says `[guard]`. `:diagram/condition` says what
@@ -156,6 +172,9 @@ this repo gives a shell with a pinned Graphviz 15.1.1 (see [Develop](#develop)).
 | `(zoom-targets chart)` | Every container you can zoom into, outermost first, with its `:path` of labels and its `:svg-id`. For a nav menu |
 | `(session-dot env session-id opts)` | DOT for a running session: its chart from the env's registry, its active states from the working-memory store. Nil if the store has no such session |
 | `(render-session env session-id opts)` | `render` for a running session; `{:error "No session …"}` if there is none |
+| `(moves chart focus)` | Where a viewer can go from a view: `{:in :open :out :stubs}`, the containers to zoom into, the charts its states invoke, one container up, and what its `↗` stubs lead to. The explorer makes them clicks; a chat bot can make them buttons under an image |
+| `(explorer chart opts)` | The chart and the charts it invokes (`:charts {src chart}`) as a clickable HTML fragment; `:dark` adds a theme for dark pages |
+| `(explorer-page chart opts)` | `explorer` as a whole HTML page |
 | `(session-tree env session-id)` | The session and the charts it invoked, recursively: `{:session-id :src :active :parent :children}` |
 
 Options for `dot` and `render`:
@@ -165,6 +184,7 @@ Options for `dot` and `render`:
 | `:active` | Set of active state ids, i.e. a session's configuration |
 | `:focus` | Draw only this state's subtree. Transitions leaving it end at a grey `↗ name` stub, and the title becomes a breadcrumb |
 | `:depth` | Expand this many container levels below the focus; deeper ones become one `⊞ n states` box |
+| `:max-loops` | The most targetless transitions a state draws as self-loops, default 2. Past it, they are listed in its box: a state that handles many events without leaving, like an inbox, stays readable |
 | `:title` | Title above the diagram |
 | `:theme` | Partial map overriding `statechart-viz.theme/default` |
 
@@ -180,7 +200,7 @@ Options for `dot` and `render`:
 | Initial | Dot inside its region, one arrow to the first state |
 | Guarded transition | Purple, marked `[guard]` or `[`*`:diagram/condition`*`]` |
 | Fallback transition | Marked `[else]`: unguarded, after a guarded transition on the same events from the same state |
-| Targetless (internal) transition | Dotted self-loop, or `↺ event` in the label of a container |
+| Targetless (internal) transition | Dotted self-loop. Listed as `↺ event` lines instead in the box of a container, or of a state with more than `:max-loops` (default 2) of them |
 | Transition between a container and its own child | Starts or ends at a small circle at the container's top |
 | Active state | Gold fill, or a gold border on a container |
 

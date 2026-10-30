@@ -13,7 +13,8 @@
    ["nested-focus"    f/nested         {:active #{:app :app/running :run/work :work/b} :focus :app/running}]
    ["parallel"        f/parallel-chart {:active #{:decide :axis/who :who/direct :axis/what :what/checking}}]
    ["invoke"          f/with-invoke    {:active #{:game :game/playing}}]
-   ["invoke-child"    f/child          {:active #{:coin/tails} :title "game › Playing › ⤵ child"}]])
+   ["invoke-child"    f/child          {:active #{:coin/tails} :title "game › Playing › ⤵ child"}]
+   ["inbox"           f/inbox          {:active #{:agent :agent/intake :agent/timer :timer/on}}]])
 
 (defn -main [& [dir]]
   (let [dir (or dir "out")]

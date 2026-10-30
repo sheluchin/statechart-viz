@@ -11,7 +11,9 @@
     guarded edge     coloured, labelled [guard] unless the transition has a :diagram/label
     fallback edge    labelled [else]: unguarded, after a guarded sibling on the same events
     eventless edge   no event text
-    internal / targetless transition   dotted self-loop
+    internal / targetless transition   dotted self-loop; listed in the state's
+                     box instead (`↺ event`) on a container, or on a state with
+                     more than `:max-loops` of them
     active state     gold fill (leaves) or gold border (containers)
 
   Zoom: `:focus` draws only that state's subtree; `:depth` collapses containers
@@ -40,11 +42,16 @@
   [node]
   (str "state:" (:key node)))
 
-(defn- attrs [m]
+(defn- attrs
+  "DOT attributes. A value is quoted and escaped, unless it is `{:raw s}`:
+  `s` is already DOT text, for a label with its own line breaks."
+  [m]
   (str "["
        (->> m
             (remove (comp nil? val))
-            (map (fn [[k v]] (str (name k) "=" (if (number? v) v (q v)))))
+            (map (fn [[k v]] (str (name k) "=" (cond (number? v) v
+                                                    (map? v)    (str "\"" (:raw v) "\"")
+                                                    :else       (q v)))))
             (str/join " "))
        "]"))
 
@@ -96,19 +103,37 @@
   (let [kids (remove #(= :history (:kind %)) (:children node))]
     (reduce + (count kids) (map count-states kids))))
 
-(defn- container-loop?
-  "A targetless transition on a drawn container: shown in the container's
-  label, since a self-loop on a cluster has nothing to attach to."
+(def default-max-loops
+  "The most targetless transitions a state draws as self-loops. Past it their
+  loops and labels pile up on one side of the state, so it lists them instead."
+  2)
+
+(defn- crowded
+  "The ids of the states with more targetless transitions than `limit`."
+  [transitions limit]
+  (->> transitions
+       (filter #(empty? (:targets %)))
+       (map :source)
+       frequencies
+       (keep (fn [[id n]] (when (> n limit) id)))
+       set))
+
+(defn- listed-loop?
+  "A targetless transition listed in its state's box instead of drawn as a
+  self-loop: on a drawn container, since a self-loop on a cluster has nothing
+  to attach to, and on a state with more than `:max-loops` of them."
   [ctx tr]
   (and (empty? (:targets tr))
        (let [node (get (:idx ctx) (:source tr))]
-         (and (m/compound? node) (not (collapsed? ctx node))))))
+         (if (m/compound? node)
+           (not (collapsed? ctx node))
+           (contains? (:crowded ctx) (:id node))))))
 
 (declare edge-label)
 
 (defn- loop-labels [ctx node]
   (->> (:transitions ctx)
-       (filter #(and (= (:id node) (:source %)) (container-loop? ctx %)))
+       (filter #(and (= (:id node) (:source %)) (listed-loop? ctx %)))
        (map #(str "↺ " (edge-label %)))))
 
 ;; ---------------------------------------------------------------------------
@@ -134,11 +159,16 @@
                    :fillcolor (fill-for ctx node active?)
                    :color     (if active? (:active-border t) (:state-border t))})
            ";\n")
-      (let [invokes (:invokes node)]
+      (let [invokes (:invokes node)
+            loops   (loop-labels ctx node)]
         (str "  " (q id) " "
              (attrs {:id         (svg-id node) :class (if (seq invokes) "sv-state sv-invokes" "sv-state")
-                     ;; a state that only invokes lists its charts under its name
-                     :label      (str/join "\n" (cons (:label node) (map #(str "⤵ " (:label %)) invokes)))
+                     ;; a state that only invokes lists its charts under its name, and a crowded
+                     ;; one its targetless transitions, left-aligned (`\l`) when there are any
+                     :label      (if (seq loops)
+                                   {:raw (str (esc (str/join "\n" (cons (:label node) (map #(str "⤵ " (:label %)) invokes))))
+                                              "\\n" (apply str (map #(str (esc %) "\\l") loops)))}
+                                   (str/join "\n" (cons (:label node) (map #(str "⤵ " (:label %)) invokes))))
                      :shape      "box"
                      :style      (if (seq invokes) "rounded,filled,dashed" "rounded,filled")
                      :peripheries (when (= :final (:kind node)) 2)
@@ -275,7 +305,7 @@
        (remove (fn [{:keys [tr src src-rep tgt-rep self?]}]
                  (or (and (= :outside src-rep) (= :outside tgt-rep))
                      ;; internal loops are drawn on their own state only
-                     (and self? (or (not= src src-rep) (container-loop? ctx tr)))
+                     (and self? (or (not= src src-rep) (listed-loop? ctx tr)))
                      (and (not self?) (= src-rep tgt-rep)
                           (collapsed? ctx (get (:idx ctx) src-rep))))))
        (map (fn [{:keys [src tgt src-rep tgt-rep] :as e}]
@@ -385,10 +415,12 @@
     :active  set of active state ids (a session's configuration)
     :focus   state id to zoom into; default the whole chart
     :depth   container levels to expand below the focus; default all
+    :max-loops  the most targetless transitions a state draws as self-loops;
+             past it they are listed in its box. Default 2, `default-max-loops`
     :title   graph title; default the chart's :diagram/label or nothing
     :theme   partial theme map, see statechart-viz.theme/default"
   ([chart] (dot chart {}))
-  ([chart {:keys [active focus depth title] :as opts}]
+  ([chart {:keys [active focus depth title max-loops] :or {max-loops default-max-loops} :as opts}]
    (let [tree   (m/tree chart)
          idx    (m/index tree)
          focus  (or focus :ROOT)
@@ -402,7 +434,8 @@
                  :focus-depth (:depth (get idx focus))
                  :depth       depth
                  :theme       t
-                 :transitions (m/transitions chart)}
+                 :transitions (m/transitions chart)
+                 :crowded     (crowded (m/transitions chart) max-loops)}
          specs  (edge-specs ctx)
          ctx    (assoc ctx :ports (ports ctx specs))
          ghosts (ghost-lines ctx specs)
