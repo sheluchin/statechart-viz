@@ -38,8 +38,26 @@
     #events { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
     #events button { font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
     #diagram { background: #f7f8fa; border: 1px solid var(--border); border-radius: 6px;
-               padding: 8px; overflow: auto; min-height: 200px; }
+               overflow: hidden; position: relative; min-height: 200px; }
+    #diagram.zoomed { cursor: grab; }
+    #diagram.dragging { cursor: grabbing; }
+    #diagram .canvas { padding: 8px; transform-origin: 0 0; }
     #diagram svg { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+    #diagram .go { cursor: pointer; }
+    #diagram.dragging .go { cursor: grabbing; }
+    #diagram .go:hover > path, #diagram .go:hover > polygon,
+    #diagram .go:focus > path, #diagram .go:focus > polygon { stroke-width: 3.5; }
+    #diagram .go:hover > text, #diagram .go:focus > text { text-decoration: underline; }
+    #diagram .go:focus { outline: none; }
+    #viewbar { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center;
+               justify-content: space-between; margin-bottom: 6px;
+               font: 12px ui-monospace, Menlo, monospace; }
+    #crumbs, #viewbar .zoom { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; min-width: 0; }
+    #viewbar button { font: inherit; padding: 2px 6px; background: none; border-color: transparent; }
+    #viewbar button:hover:not(:disabled) { border-color: var(--border); }
+    #crumbs button[aria-current] { font-weight: 600; cursor: default; border-color: transparent; }
+    #crumbs .sep, #viewbar .hint { color: var(--muted); }
+    #zoom-level { min-width: 4.5ch; text-align: center; font-variant-numeric: tabular-nums; }
     #active { color: var(--muted); font: 12px ui-monospace, Menlo, monospace; margin-top: 8px;
               word-break: break-word; }
     #error { color: var(--error); background: var(--error-bg); padding: 8px 10px;
@@ -76,8 +94,9 @@
     <h2>statechart-viz</h2>
     <p>Draws any <a href="https://github.com/fulcrologic/statecharts">Fulcro statechart</a> as a
       Graphviz diagram, with the active states highlighted.</p>
-    <p>Edit the code, Run, and click events to step the chart. Share copies a link that opens your
-      chart.</p>
+    <p>Edit the code, Run, and click events to step the chart. Click a box in the drawing to zoom
+      into it and a <code>↗</code> stub to step back out; scroll over it to magnify, drag to pan.
+      Share copies a link that opens your chart.</p>
     <p>Link to your own chart without opening the page first: add
       <code>#src=</code> and the raw URL of a <code>.cljs</code> file, e.g. a gist.
       <a href="https://github.com/sheluchin/statechart-viz#linking-to-a-chart">More ways</a>.</p>
@@ -97,6 +116,16 @@
       <div id="error" class="hidden"></div>
       <p class="label">Events (enabled when an active state handles them)</p>
       <div id="events"></div>
+      <div id="viewbar">
+        <nav id="crumbs" aria-label="Where you are"></nav>
+        <div class="zoom">
+          <span class="hint">click a box to zoom in · scroll to magnify · Esc goes back</span>
+          <button type="button" id="zoom-out" aria-label="Zoom out">−</button>
+          <span id="zoom-level">100%</span>
+          <button type="button" id="zoom-in" aria-label="Zoom in">+</button>
+          <button type="button" id="zoom-fit">Fit</button>
+        </div>
+      </div>
       <div id="diagram"></div>
       <div id="active"></div>
     </section>
