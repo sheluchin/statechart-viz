@@ -426,12 +426,13 @@
 (defn- title-label
   "The title of a zoomed view, as an HTML label: `title`, then the breadcrumb
   from the top to the focus. Each part before the focus is a cell with an id
-  (`crumb-id`), so a viewer can make it a way back out; its tooltip is what
-  makes Graphviz write the id."
+  (`crumb-id`), so a viewer can make it a way back out. Graphviz writes a
+  cell's id only for a link: an empty HREF (2.43 wants one) and a tooltip
+  make it write one with no href, so nothing changes the page's URL."
   [idx focus title]
   (let [label #(:label (get idx %))
         plain #(str "<TD>" (html %) "</TD>")
-        link  (fn [id tip text] (str "<TD ID=\"" (html id) "\" TOOLTIP=\"" (html tip) "\">" (html text) "</TD>"))
+        link  (fn [id tip text] (str "<TD ID=\"" (html id) "\" HREF=\"\" TOOLTIP=\"" (html tip) "\">" (html text) "</TD>"))
         path  (reverse (remove #{:ROOT} (cons focus (m/ancestors-of idx focus))))]
     (str "<<TABLE BORDER=\"0\" CELLBORDER=\"0\" CELLSPACING=\"0\" CELLPADDING=\"0\"><TR>"
          (when-not (str/blank? title)
