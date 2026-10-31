@@ -32,8 +32,13 @@
         go    (:go (get views "c0.app/running"))]
     (is (str/includes? (:dot (get views "c0.app/running")) "id=\"stub:app/paused\""))
     (is (= {:view "c0.app" :hint "Out to app"} (get go "stub:app/paused")))
+    (testing "the title's breadcrumb leads out too"
+      (is (= {:view "c0.app" :hint "Out to app"} (get go "a_crumb:app"))))
     (testing "only what the view draws is clickable"
-      (is (every? #(str/includes? (:dot (get views "c0.app/running")) (str "id=\"" % "\"")) (keys go)))
+      (is (every? #(or (str/includes? (:dot (get views "c0.app/running")) (str "id=\"" % "\""))
+                       (str/includes? (:dot (get views "c0.app/running")) (str "ID=\"" (subs % 2) "\"")))
+                  (keys go)))
+      (is (nil? (get go "a_crumb:ROOT")) "a zoomed view has no title, so no part for the whole chart")
       (is (nil? (get go "state:app"))))))
 
 (deftest only-a-charts-own-view-is-titled

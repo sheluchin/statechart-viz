@@ -47,7 +47,8 @@
     #diagram.dragging .go { cursor: grabbing; }
     #diagram .go:hover > path, #diagram .go:hover > polygon,
     #diagram .go:focus > path, #diagram .go:focus > polygon { stroke-width: 3.5; }
-    #diagram .go:hover > text, #diagram .go:focus > text { text-decoration: underline; }
+    #diagram .go:hover > text, #diagram .go:focus > text,
+    #diagram .go:hover > a > text, #diagram .go:focus > a > text { text-decoration: underline; }
     #diagram .go:focus { outline: none; }
     #viewbar { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center;
                justify-content: space-between; margin-bottom: 6px;
@@ -95,7 +96,7 @@
     <p>Draws any <a href="https://github.com/fulcrologic/statecharts">Fulcro statechart</a> as a
       Graphviz diagram, with the active states highlighted.</p>
     <p>Edit the code, Run, and click events to step the chart. Click a box in the drawing to zoom
-      into it and a <code>↗</code> stub to step back out; scroll over it to magnify, drag to pan.
+      into it, and a <code>↗</code> stub or a part of its title to step back out; scroll over it to magnify, drag to pan.
       Share copies a link that opens your chart.</p>
     <p>Link to your own chart without opening the page first: add
       <code>#src=</code> and the raw URL of a <code>.cljs</code> file, e.g. a gist.

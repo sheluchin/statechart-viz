@@ -19,6 +19,16 @@
     (testing "a stub for each state outside its transitions reach, and the view holding both ends"
       (is (= [{:id :app/paused :label "paused" :svg-id "stub:app/paused" :to :app}] stubs)))))
 
+(deftest the-title-leads-back-out
+  (testing "the whole chart, then each container around the view, from the top"
+    (is (= [{:id :ROOT :label "the whole chart" :svg-id "a_crumb:ROOT" :to :ROOT}
+            {:id :app :label "app" :svg-id "a_crumb:app" :to :app}
+            {:id :app/running :label "running" :svg-id "a_crumb:app/running" :to :app/running}]
+           (:crumbs (viz/moves f/nested :run/work)))))
+  (testing "the only top-level state leads to the whole chart"
+    (is (= :ROOT (:to (second (:crumbs (viz/moves f/parallel-chart :axis/who)))))))
+  (is (= [] (:crumbs (viz/moves f/nested nil))) "none on the whole chart"))
+
 (deftest the-only-top-state-is-the-whole-chart
   (testing "not a container to zoom into, and one up from its child is the whole chart"
     (is (= [:axis/who :axis/what] (map :id (:in (viz/moves f/parallel-chart nil)))))

@@ -11,7 +11,7 @@ without writing its own renderer. Runs under babashka 1.13.223+, on the JVM, and
 
 **[Try it in your browser](https://sheluchin.github.io/statechart-viz/):** paste a chart, click its
 events and watch the active states move. Click a box in the drawing to zoom into it and a `↗` stub
-to step back out; scroll over it to magnify, drag to pan. It runs in
+or a part of its title to step back out; scroll over it to magnify, drag to pan. It runs in
 [Scittle](https://github.com/babashka/scittle), with no build step; the source is in [`site/`](site/).
 
 Share a chart with a link: the Share button makes one, or build your own (see
@@ -43,7 +43,8 @@ finals (double border).
 ### Zoom in, fold away
 
 `:focus` draws one state's subtree. A transition that leaves it ends at a grey `↗ off` stub, and
-the title becomes a breadcrumb. `:depth` folds everything deeper than that many levels into one
+the title becomes a breadcrumb, each part of it before the focus with an id of its own
+(`crumb-id`) for a viewer to make a way back out. `:depth` folds everything deeper than that many levels into one
 `⊞ 4 states` box, for an overview. `zoom-targets` lists every container you can focus on, for a
 nav menu.
 
@@ -65,7 +66,8 @@ is its own session, so you draw it with its own call, and a `:title` says where 
 
 `explorer` draws a chart and the charts it invokes as one HTML page you click through. Click a
 container to zoom into it, click a state that invokes a chart to open that chart, and click a
-`↗ stub` to step out to the state holding both ends. The breadcrumb, or Escape, goes back.
+`↗ stub`, or a part of the drawing's title, to step out to the state holding both ends. The
+breadcrumb above the drawing, or Escape, goes back.
 Every view is rendered ahead of time, so the page needs no Graphviz and no runtime, and works
 as a file, a GitHub Pages page or part of another page.
 
@@ -83,7 +85,7 @@ one chart.
 
 To make clicks or buttons of your own, `moves` gives the same data the explorer uses: the
 containers inside a view, the charts its states invoke, one level up, and where each `↗` stub
-leads.
+and each part of the title leads.
 
 ### Annotations
 
@@ -181,7 +183,7 @@ this repo gives a shell with a pinned Graphviz 15.1.1 (see [Develop](#develop)).
 | `(zoom-targets chart)` | Every container you can zoom into, outermost first, with its `:path` of labels and its `:svg-id`. For a nav menu |
 | `(session-dot env session-id opts)` | DOT for a running session: its chart from the env's registry, its active states from the working-memory store. Nil if the store has no such session |
 | `(render-session env session-id opts)` | `render` for a running session; `{:error "No session …"}` if there is none |
-| `(moves chart focus)` | Where a viewer can go from a view: `{:in :open :out :stubs}`, the containers to zoom into, the charts its states invoke, one container up, and what its `↗` stubs lead to. The explorer makes them clicks; a chat bot can make them buttons under an image |
+| `(moves chart focus)` | Where a viewer can go from a view: `{:in :open :out :stubs :crumbs}`, the containers to zoom into, the charts its states invoke, one container up, what its `↗` stubs lead to, and where each part of its title's breadcrumb leads. The explorer makes them clicks; a chat bot can make them buttons under an image |
 | `(explorer chart opts)` | The chart and the charts it invokes (`:charts {src chart}`) as a clickable HTML fragment; `:dark` adds a theme for dark pages |
 | `(explorer-page chart opts)` | `explorer` as a whole HTML page |
 | `(session-tree env session-id)` | The session and the charts it invoked, recursively: `{:session-id :src :active :parent :children}` |

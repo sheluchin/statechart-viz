@@ -2,7 +2,8 @@
   "The playground: evaluates the editor's code with SCI, runs the chart it
   returns in a simple-env session, and draws it with Graphviz compiled to
   WASM. One button per event; the ones the active states accept are enabled.
-  Click a box in the drawing to zoom into it and a `↗` stub to step back out
+  Click a box in the drawing to zoom into it, and a `↗` stub or a part of
+  the title's breadcrumb to step back out
   (statechart-viz.nav/moves); the wheel magnifies it and a drag pans it.
 
   The URL hash picks what the editor starts with:
@@ -115,10 +116,11 @@
 (defn- link-moves!
   "Mark the boxes and stubs of `svg` that go somewhere, and keep where."
   [svg chart focus]
-  (let [{:keys [in stubs]} (viz/moves chart focus)
+  (let [{:keys [in stubs crumbs]} (viz/moves chart focus)
         drawn (into {} (map (fn [g] [(.-id g) g])) (js/Array.from (.querySelectorAll svg "g[id]")))
         goes  (concat (for [{:keys [id label svg-id]} in] [svg-id id (str "Zoom into " label)])
-                      (for [{:keys [to svg-id]} stubs] [svg-id to (str "Out to " (label-of chart to))]))]
+                      (for [{:keys [to svg-id]} stubs] [svg-id to (str "Out to " (label-of chart to))])
+                      (for [{:keys [to label svg-id]} crumbs] [svg-id to (str "Out to " label)]))]
     (swap! state assoc :go
            (into {} (for [[svg-id to hint] goes
                           :let [g (get drawn svg-id)]

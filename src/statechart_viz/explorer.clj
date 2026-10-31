@@ -63,8 +63,10 @@
   moves (`statechart-viz.nav/moves`) as clicks. Only ids the view's DOT draws,
   and charts the explorer has, are kept."
   [{:keys [idx chart chart-key key-of]} focus dot-text]
-  (let [{:keys [in open stubs]} (nav/moves chart focus)
-        drawn? #(str/includes? dot-text (str "id=\"" % "\""))
+  (let [{:keys [in open stubs crumbs]} (nav/moves chart focus)
+        ;; a title part's id is given as its cell's, without Graphviz's a_
+        drawn? #(or (str/includes? dot-text (str "id=\"" % "\""))
+                    (str/includes? dot-text (str "ID=\"" (str/replace-first % #"^a_" "") "\"")))
         vk     #(view-key chart-key chart % idx)]
     (into {}
           (filter (fn [[id _]] (drawn? id)))
@@ -74,7 +76,9 @@
            (reverse (for [{:keys [src label svg-id]} open :when (contains? key-of src)]
                       [svg-id {:view (get key-of src) :hint (str "Open " label)}]))
            (for [{:keys [to svg-id]} stubs]
-             [svg-id {:view (vk to) :hint (str "Out to " (if (= :ROOT to) "the whole chart" (:label (get idx to))))}])))))
+             [svg-id {:view (vk to) :hint (str "Out to " (if (= :ROOT to) "the whole chart" (:label (get idx to))))}])
+           (for [{:keys [to label svg-id]} crumbs]
+             [svg-id {:view (vk to) :hint (str "Out to " label)}])))))
 
 (defn plan
   "The explorer's views, before rendering: `{:start view-key :views {view-key
@@ -156,7 +160,7 @@
 .sv-explorer .sv-go{cursor:pointer}
 .sv-explorer .sv-stage.dragging .sv-go{cursor:grabbing}
 .sv-explorer .sv-go:hover>path,.sv-explorer .sv-go:hover>polygon,.sv-explorer .sv-go:focus>path,.sv-explorer .sv-go:focus>polygon{stroke-width:3.5}
-.sv-explorer .sv-go:hover>text,.sv-explorer .sv-go:focus>text{text-decoration:underline}
+.sv-explorer .sv-go:hover>text,.sv-explorer .sv-go:focus>text,.sv-explorer .sv-go:hover>a>text,.sv-explorer .sv-go:focus>a>text{text-decoration:underline}
 .sv-explorer .sv-go:focus{outline:none}")
 
 (def ^:private script

@@ -9,7 +9,12 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 525.73)">
 <title>statechart</title>
 <polygon fill="#f7f8fa" stroke="none" points="-21.6,21.6 -21.6,-525.73 305.6,-525.73 305.6,21.6 -21.6,21.6"/>
-<text xml:space="preserve" text-anchor="middle" x="45.5" y="-486.83" font-family="Helvetica,sans-Serif" font-size="14.00" fill="#1c2230">player › on</text>
+<g id="a_crumb:player"><a xlink:title="Out to player">
+<text xml:space="preserve" text-anchor="start" x="8" y="-486.63" font-family="Helvetica,sans-Serif" font-size="14.00" fill="#1c2230">player</text>
+</a>
+</g>
+<text xml:space="preserve" text-anchor="start" x="51.5" y="-486.63" font-family="Helvetica,sans-Serif" font-size="14.00" fill="#1c2230"> › </text>
+<text xml:space="preserve" text-anchor="start" x="65.75" y="-486.63" font-family="Helvetica,sans-Serif" font-size="14.00" fill="#1c2230">on</text>
 <g id="state:player/on" class="cluster sv&#45;container">
 <title>cluster_s2</title>
 <path fill="#f7f8fa" stroke="#b8860b" stroke-width="2.5" d="M20,-8C20,-8 210,-8 210,-8 216,-8 222,-14 222,-20 222,-20 222,-458.88 222,-458.88 222,-464.88 216,-470.88 210,-470.88 210,-470.88 20,-470.88 20,-470.88 14,-470.88 8,-464.88 8,-458.88 8,-458.88 8,-20 8,-20 8,-14 14,-8 20,-8"/>

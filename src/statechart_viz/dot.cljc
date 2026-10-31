@@ -35,6 +35,26 @@
 
 (defn- q [s] (str "\"" (esc s) "\""))
 
+(defn- html
+  "Text for a Graphviz HTML-like label."
+  [s]
+  (-> (str s)
+      (str/replace "&" "&amp;")
+      (str/replace "<" "&lt;")
+      (str/replace ">" "&gt;")
+      (str/replace "\"" "&quot;")
+      (str/replace "\n" "<BR/>")))
+
+(defn- crumb-cell-id [node]
+  (str "crumb:" (if (= :ROOT node) "ROOT" (:key node))))
+
+(defn crumb-id
+  "SVG element id of the title's part naming `node`, :ROOT for the title
+  itself: the parts of a zoomed view's breadcrumb that lead back out.
+  Graphviz writes a table cell's id with an `a_` in front."
+  [node]
+  (str "a_" (crumb-cell-id node)))
+
 (defn svg-id
   "SVG element id for a tree node, so a viewer can map a click back to it:
   `:intake/handling` -> `state:intake/handling`. An unnamed state gets one
@@ -403,12 +423,25 @@
 ;; ---------------------------------------------------------------------------
 ;; Entry point
 
-(defn- breadcrumb [idx focus]
-  (->> (cons focus (m/ancestors-of idx focus))
-       (remove #{:ROOT})
-       reverse
-       (map #(:label (get idx %)))
-       (str/join " › ")))
+(defn- title-label
+  "The title of a zoomed view, as an HTML label: `title`, then the breadcrumb
+  from the top to the focus. Each part before the focus is a cell with an id
+  (`crumb-id`), so a viewer can make it a way back out; its tooltip is what
+  makes Graphviz write the id."
+  [idx focus title]
+  (let [label #(:label (get idx %))
+        plain #(str "<TD>" (html %) "</TD>")
+        link  (fn [id tip text] (str "<TD ID=\"" (html id) "\" TOOLTIP=\"" (html tip) "\">" (html text) "</TD>"))
+        path  (reverse (remove #{:ROOT} (cons focus (m/ancestors-of idx focus))))]
+    (str "<<TABLE BORDER=\"0\" CELLBORDER=\"0\" CELLSPACING=\"0\" CELLPADDING=\"0\"><TR>"
+         (when-not (str/blank? title)
+           (str (link (crumb-cell-id :ROOT) "Out to the whole chart" title) (plain "  ·  ")))
+         (str/join (plain " › ")
+                   (for [id path]
+                     (if (= id focus)
+                       (plain (label id))
+                       (link (crumb-cell-id (get idx id)) (str "Out to " (label id)) (label id)))))
+         "</TR></TABLE>>")))
 
 (defn dot
   "DOT for a compiled chart. Options:
@@ -439,16 +472,16 @@
          specs  (edge-specs ctx)
          ctx    (assoc ctx :ports (ports ctx specs))
          ghosts (ghost-lines ctx specs)
-         crumb  (when (not= focus :ROOT) (breadcrumb idx focus))
          title  (or title (:diagram/label chart))
-         gtitle (str/join "  ·  " (remove str/blank? [title crumb]))
+         gtitle (cond (not= focus :ROOT)       (title-label idx focus title)
+                      (not (str/blank? title)) (q title))
          start  (get idx focus)]
      (str "digraph statechart {\n"
           "  compound=true; newrank=true; rankdir=TB;\n"
           "  bgcolor=" (q (:background t)) "; pad=0.3; nodesep=0.4; ranksep=0.45;\n"
           "  fontname=" (q (:font t)) "; fontcolor=" (q (:text t)) ";\n"
-          (when-not (str/blank? gtitle)
-            (str "  label=" (q gtitle) "; labelloc=\"t\"; labeljust=\"l\"; fontsize=" (+ 2 (:font-size t)) ";\n"))
+          (when gtitle
+            (str "  label=" gtitle "; labelloc=\"t\"; labeljust=\"l\"; fontsize=" (+ 2 (:font-size t)) ";\n"))
           "  node [fontname=" (q (:font t)) " fontsize=" (:font-size t) " fontcolor=" (q (:text t)) " margin=\"0.15,0.06\"];\n"
           "  edge [fontname=" (q (:edge-font t)) " fontsize=" (:edge-font-size t) " arrowsize=0.8];\n"
           (cond (= :root (:kind start)) (str (initial-lines ctx start)
