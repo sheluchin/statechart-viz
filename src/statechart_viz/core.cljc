@@ -67,9 +67,9 @@
 
 (defn moves
   "Where a viewer can go from the view of `chart` focused on `focus` (nil for
-  the whole chart): `{:in :open :out :stubs}`, the containers to zoom into,
-  the charts its states invoke, one container up, and the states its `↗`
-  stubs stand for. One model for every kind of viewer: the explorer makes
+  the whole chart): `{:in :open :out :stubs :crumbs}`, the containers to
+  zoom into, the charts its states invoke, one container up, the states its
+  `↗` stubs stand for, and the parts of its title that lead back out. One model for every kind of viewer: the explorer makes
   them clicks, a chat bot buttons under an image. See statechart-viz.nav."
   [chart focus]
   (nav/moves chart focus))

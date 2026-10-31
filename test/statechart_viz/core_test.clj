@@ -126,8 +126,20 @@
       (is (nil? (line-for dot "off"))))
     (testing "edges leaving the subtree end at a stub"
       (is (str/includes? dot "label=\"↗ paused\"")))
-    (testing "the title is a breadcrumb"
-      (is (str/includes? dot "label=\"app › running\""))))
+    (testing "the title is a breadcrumb, its parts before the focus with ids"
+      (is (str/includes? dot "<TD ID=\"crumb:app\" HREF=\"\" TOOLTIP=\"Out to app\">app</TD><TD> › </TD><TD>running</TD>"))
+      (is (not (str/includes? dot "crumb:ROOT")) "no title, so no part for the whole chart"))
+    (testing "a title leads the breadcrumb, and its part is the whole chart's"
+      (is (str/includes? (viz/dot f/nested {:focus :app/running :title "after <go> & \"stop\""})
+                         "<TD ID=\"crumb:ROOT\" HREF=\"\" TOOLTIP=\"Out to the whole chart\">after &lt;go&gt; &amp; &quot;stop&quot;</TD><TD>  ·  </TD>")))
+    (testing "Graphviz draws the parts with the ids crumb-id names"
+      (when (r/dot-available?)
+        (let [svg (String. ^bytes (:ok (r/render-dot (viz/dot f/nested {:focus :run/work :title "t"}) {:format :svg})) "UTF-8")]
+          (is (str/includes? svg "id=\"a_crumb:ROOT\""))
+          (is (str/includes? svg "id=\"a_crumb:app\""))
+          (is (str/includes? svg "id=\"a_crumb:app/running\""))
+          (is (not (str/includes? svg "a_crumb:run/work")) "the focus itself isn't a way out")
+          (is (not (str/includes? svg "href")) "and no part is a link")))))
   (testing "an unknown focus is an error"
     (is (thrown-with-msg? clojure.lang.ExceptionInfo #"No state :nope"
                           (viz/dot f/nested {:focus :nope})))))

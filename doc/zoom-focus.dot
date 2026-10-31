@@ -2,7 +2,7 @@ digraph statechart {
   compound=true; newrank=true; rankdir=TB;
   bgcolor="#f7f8fa"; pad=0.3; nodesep=0.4; ranksep=0.45;
   fontname="Helvetica"; fontcolor="#1c2230";
-  label="player › on"; labelloc="t"; labeljust="l"; fontsize=14;
+  label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD ID="crumb:player" HREF="" TOOLTIP="Out to player">player</TD><TD> › </TD><TD>on</TD></TR></TABLE>>; labelloc="t"; labeljust="l"; fontsize=14;
   node [fontname="Helvetica" fontsize=12 fontcolor="#1c2230" margin="0.15,0.06"];
   edge [fontname="Courier" fontsize=10 arrowsize=0.8];
 subgraph "cluster_s2" {

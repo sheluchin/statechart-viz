@@ -43,7 +43,11 @@
             the whole chart
     :stubs  [{:id :label :svg-id :to}]  the states outside it that its
             transitions reach, drawn as `↗` stubs: `:to` is the view that
-            holds both ends"
+            holds both ends
+    :crumbs [{:id :label :svg-id :to}]  the parts of its title's breadcrumb
+            that lead back out, from the top: the title itself (:ROOT, drawn
+            only when the view has a title), then each container around
+            it. `:to` is the view each leads to"
   [chart focus]
   (let [tree  (m/tree chart)
         idx   (m/index tree)
@@ -64,6 +68,12 @@
                                           (m/ancestors-of idx focus)))
                            :ROOT)]
                 {:id up :label (label up)}))
+     :crumbs (if (= :ROOT focus)
+               []
+               (vec (cons {:id :ROOT :label "the whole chart" :svg-id (d/crumb-id :ROOT) :to :ROOT}
+                          (for [id (reverse (m/ancestors-of idx focus))
+                                :when (not= :ROOT id)]
+                            {:id id :label (label id) :svg-id (d/crumb-id (get idx id)) :to (view-focus chart id)}))))
      :stubs (if (= :ROOT focus)
               []
               (vec (for [id (distinct
